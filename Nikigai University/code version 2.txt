@@ -1,0 +1,299 @@
+import { contacts } from 'wix-crm';
+import { triggeredEmails } from 'wix-crm';
+import { currentMember } from 'wix-members';
+import wixUsers from 'wix-users';
+import wixData from 'wix-data';
+
+let a = null,
+    b = null,
+    c = null,
+    d = null,
+    e = null,
+    f = null,
+    g = null,
+    h = null,
+    i = null,
+    j = null,
+    k=null;
+    
+   
+
+$w.onReady(function () {
+    $w('#next').onClick(() => {
+        if ($w('#tabBox').currentState.id == $w('#tab1').id) {
+            $w('#tabBox').changeState('tab3');
+        } else if ($w('#tabBox').currentState.id == $w('#tab4').id) {
+            $w('#submit').show();
+            $w('#next').hide();
+            $w('#tabBox').changeState('tab5');
+
+        } else {
+            const currentState = $w('#tabBox').currentState.id;
+            console.log(currentState);
+            const stateNumber1 = Number(currentState.slice(-1));
+            const nextState = `tab${stateNumber1 + 1}`; // Use backticks for string interpolation
+            console.log(`tab${stateNumber1 + 1}`);
+            //console.log(currentState, stateNumber1, nextState);
+            $w('#tabBox').changeState(nextState); // Remove the quotes around nextState}
+        }
+    });
+
+    $w('#back').onClick(() => {
+        if ($w('#tabBox').currentState.id == $w('#tab2').id) {
+            $w('#tabBox').changeState('tab0');
+        } else {
+            const currentState = $w('#tabBox').currentState.id;
+            console.log(currentState);
+            const stateNumber = Number(currentState.slice(-1));
+            const nextState = `tab${stateNumber - 1}`;
+            console.log(`tab${stateNumber - 1}`); // Use backticks for string interpolation
+            //console.log(currentState, stateNumber, nextState);
+            $w('#tabBox').changeState(nextState); // Remove the quotes around nextState
+            $w('#submit').hide();
+            $w('#next').show();
+        }
+    });
+
+    $w('#q1c1').onClick(() => {
+        $w('#tabBox').changeState($w('#tab1').id);
+        $w('#back').enable();
+        a = "Seeking a career that provides fulfilment (and financial security)";
+    });
+    $w('#q1c2').onClick(() => {
+        $w('#tabBox').changeState($w('#tab2').id);
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+        a = "A solopreneur looking to build an empire.";
+    });
+    $w('#q2c1').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq2c1').hidden) {
+            $w('#tq2c1').show();
+            b = "Clarity on options";
+        } else {
+            $w('#tq2c1').hide();
+            b = null;
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q2c2').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq2c2').hidden) {
+            $w('#tq2c2').show();
+            c = "Support securing the job";
+        } else {
+            $w('#tq2c2').hide();
+            c = null;
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q2c3').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq2c3').hidden) {
+            $w('#tq2c3').show();
+            d = "Training to qualify for the job";
+        } else {
+            $w('#tq2c3').hide();
+            d = null;
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q3c1').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq3c1').hidden) {
+            $w('#tq3c1').show();
+            e = "Financial Security While You Build";
+        } else {
+            $w('#tq3c1').hide();
+            e = null;
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q3c2').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq3c2').hidden) {
+            $w('#tq3c2').show();
+            f = "Improve Conversion On Current Offering";
+        } else {
+            $w('#tq3c2').hide();
+            f = null;
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q3c3').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq3c3').hidden) {
+            $w('#tq3c3').show();
+            g = "Increase Leads For Your Offering";
+        } else {
+            $w('#tq3c3').hide();
+            g = null;
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q5c1').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq5c1').hidden) {
+            $w('#tq5c1').show();
+            h = "Stagnate and frustrated by progress";
+
+        } else {
+            $w('#tq5c1').hide();
+            h = null;
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q5c2').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq5c2').hidden) {
+            $w('#tq5c2').show();
+            i = "I'm all set";
+        } else {
+            $w('#tq5c2').hide();
+            i=null;
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+
+    $w('#sure').onClick(() => {
+
+        $w('#tabBox').changeState('tab4');
+        j="Sure";
+
+    });
+    $w('#maybe').onClick(() => {
+        $w('#tabBox').changeState('tab5');
+        $w('#submit').show();
+        $w('#next').hide();
+        j="maybe one day";
+    });
+
+    //trigered email
+
+    $w('#submit').onClick(() => {
+        // Disable the submit button
+        $w('#submit').disable();
+        $w('#back').disable();
+          k=$w('#email').value;
+        let toInsert = {
+            "q1Choice1": a,
+            "q1Choice2": a,
+            "q2Choice1": b,
+            "q2Choice2": c,
+            "q2Choice3": d,
+            "q3Choice1": e,
+            "q3Choice2": f,
+            "q3Choice3": g,
+            "q5Choice1": h,
+            "q5Choice2": i,
+            "sure": j,
+            "email": k,
+
+        };
+
+        wixData.insert("Quiz", toInsert)
+            .then((item) => {
+                console.log(item); //see item below
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+
+        const contactInfo = {
+            emails: [{
+                email: $w('#email').value
+            }]
+        };
+        const my_Id = wixUsers.currentUser.id;
+
+        console.log(my_Id);
+        contacts.appendOrCreateContact(contactInfo)
+            .then((resolvedContact) => {
+                // Check if resolvedContact is not null or undefined
+                if (resolvedContact) {
+
+                    // Sending consultation email to the newly created contact
+                    triggeredEmails.emailContact('TosRwb7', resolvedContact.contactId)
+                        .then(() => {
+                            console.log("Goodies email sent to new contact.");
+                        })
+                        .catch((error) => {
+                            console.error("Error sending consultation email to new contact:", error);
+                        });
+
+                    // const my_id2 = $w('#email').value;
+                    triggeredEmails.emailContact('TosRwb7', my_Id)
+                        .then(() => {
+                            console.log("Goodies email sent to member.");
+                        })
+                        .catch((error) => {
+                            console.error("Error sending consultation email to member:", error);
+                        });
+                }
+
+                console.log(resolvedContact);
+            })
+            .catch((error) => {
+                console.error("Error appending or creating contact:", error);
+            })
+            .finally(() => {
+                // Enable the submit button after 3 seconds
+                setTimeout(() => {
+                    $w('#submit').enable();
+
+                    // Change the state to 'tab6' after another 3 seconds
+                    setTimeout(() => {
+                        $w('#tabBox').changeState('tab6');
+                        $w('#next').hide();
+                        $w('#back').hide();
+                        $w('#submit').hide();
+
+                    }, 500);
+                }, 500);
+            });
+    });
+
+});

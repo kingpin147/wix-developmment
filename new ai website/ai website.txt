@@ -1,0 +1,137 @@
+// Velo API Reference: https://www.wix.com/velo/reference/api-overview/introduction
+import { aiCompletion } from 'backend/ChatGPTInegration.jsw';
+import wixWindow from 'wix-window';
+import { getImages } from 'backend/PixabayVersuchIntegartionALA.jsw';
+
+$w.onReady(function () {
+    let chatArray = [];
+    $w("#askButton").enable();
+
+    const askQuestion = async () => {
+        $w("#loadingSpinner").show();
+        const user_prompt = $w("#promptInput").value;
+        const language = $w('#languageDropdown').value;
+        console.log({ "role": "user", "content": `Here is the clients question: ${user_prompt}. Answer the question in ${language}` })
+        chatArray.push({ "role": "user", "content": `Here is the clients question: ${user_prompt}. Answer the question in ${language}` })
+        const answer = await aiCompletion(chatArray);
+        let words = answer.split(" ");
+        console.log(words, "words")
+        let firstWord = words[0]
+        let secondWord = words[1]
+        let location = `${firstWord}+${secondWord}`
+        console.log(location, "location")
+        var textBoxLocation = $w('#location').value;
+        const res = await getImages(location);
+        const imgSrc = res[0];
+        console.log(imgSrc.largeImageURL, "img")
+
+        $w('#column2').background.src = imgSrc.largeImageURL;
+
+        $w('#answerBox').value = answer + "\n\nViele Spaß bei Ihrer Reise und liebe Grüße,\n\nIhr Ki-Urlaub.de-Team\n\n";
+        chatArray.push({ "role": "assistant", "content": `${answer}.` })
+        $w('#loadingSpinner').hide();
+    };
+
+    $w("#captcha").onVerified(() => {
+        $w("#askButton").enable();
+        $w('#captcha').collapse();
+    })
+    $w('#askButton').onClick(askQuestion);
+});
+
+export function lightboxButton_click(event) {
+    const dataToSend = {
+        generation: $w('#answerBox').value,
+        question: $w('#promptInput').value
+    };
+    wixWindow.openLightbox("Ki-Vorschlag merken", dataToSend);
+}
+
+export async function askButton_click(event) {
+    var location = $w('#location').value;
+    const res = await getImages(location);
+    const imgSrc = res[0];
+
+    $w('#column2').background.src = imgSrc.largeImageURL;
+}
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+import { fetch } from 'wix-fetch';
+import { getSecret } from 'wix-secrets-backend';
+
+export const aiCompletion = async (chatArray) => {
+    const url = "https://api.openai.com/v1/chat/completions";
+    const APIKEY = await getSecret("PIXABAY_API_KEY1");
+    chatArray.push({ "role": "system", "content": "You are a multi-lingual asistant for clients in an international travel and tourism company based in europe, however you have vacations to all countries, where your main job is to recommend vacation destionations to clients. Clients will ask you all sorts of questions about different vacation destions and you give them the most best answer you can." }, )
+    const messages = chatArray;
+    const options = {
+        method: "POST",
+        headers: {
+            'Content-Type': "application/json",
+            'Authorization': `Bearer ${APIKEY}`
+        },
+
+    };
+    const response = await fetch(url, options);
+    const data = await response.json();
+    return data.choices[0].message.content;
+};
+
+export const getImages = async (destination) => {
+    const axios = require('axios');
+    const APIKEY = await getSecret("PIXABAY_API_KEY1");
+    console.log(destination, "request")
+    let config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `https://pixabay.com/api/?key=${APIKEY}&q=${destination}&image_type=photo`,
+        headers: {}
+    };
+
+    return await axios.request(config)
+        .then((response) => {
+            console.log(JSON.stringify(response.data));
+            return response.data.hits
+        })
+        .catch((error) => {
+            console.log(error);
+            return error
+        });
+
+}
+
+export const getImage = async (destination) => {
+    const axios = require('axios');
+    const APIKEY = await getSecret("PIXABAY_API_KEY1");
+    var words = destination.split(' ');
+    var word0 = words[0];
+    var word1 = words[1];
+    let result = word0.concat("+", word1);
+    console.log(result, "result")
+
+    let config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `https://pixabay.com/api/?key=${APIKEY}&q=${result}&image_type=photo`,
+        headers: {}
+    };
+
+    return await axios.request(config)
+        .then((response) => {
+            console.log(JSON.stringify(response.data));
+            return response.data.hits
+        })
+        .catch((error) => {
+            console.log(error);
+            return error
+        });
+
+}
+
+/////////////////////////////////////////
+

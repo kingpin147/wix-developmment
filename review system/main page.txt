@@ -1,0 +1,61 @@
+import wixData from 'wix-data';
+
+let rating = 0;
+let recommended = 0;
+let total_count = 1;
+$w.onReady(async () => {
+    await wixData.query("NeedApproval").eq("approved", true)
+        .find()
+        .then((results) => {
+            if (results.items.length > 0) {
+                console.log("results", results.items)
+                total_count = results.items.length
+                calcualtion(results.items)
+            }
+        })
+
+});
+
+function calculate_rating_and_recommendation(rating, recommended, total_count) {
+    // console.log("recommended",recommended,total_count)
+    let total = parseInt(((rating / ((total_count * 5 * 20))) * 100).toFixed(2), 10)
+    $w("#recoPercent").text = parseInt(((recommended / total_count) * 100), 10).toString() + " ​% Recommended"
+    console.log("rec", $w("#recoPercent").text)
+    if (total > 0 && total <= 20) {
+        $w("#generalRatings").rating = 1;
+    } else if (total > 20 && total <= 40) {
+        $w("#generalRatings").rating = 2;
+    } else if (total > 40 && total <= 60) {
+        $w("#generalRatings").rating = 3;
+    } else if (total > 60 && total <= 80) {
+        $w("#generalRatings").rating = 4;
+    } else if (total > 80 && total <= 100) {
+        $w("#generalRatings").rating = 5;
+    }
+
+}
+
+function calcualtion(itemdata) {
+
+    if (total_count > 0) {
+        for (let index = 0; index < total_count; index++) {
+
+            $w("#reviewsStrip").expand()
+            rating = rating + (itemdata[index].overallExperience * 20)
+            if (itemdata[index].recommend == "true") {
+                recommended++;
+            }
+
+        }
+        console.log("rating", rating)
+        calculate_rating_and_recommendation(rating, recommended, total_count)
+        console.log("recommended", recommended)
+
+    }
+    else{
+ $w("#reviewsStrip").collapse()
+$w("#generalRatings").rating=5;
+ $w("#recoPercent").collapse()
+
+    }
+}

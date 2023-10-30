@@ -1,0 +1,180 @@
+$w.onReady(function () {
+
+
+ //RADIO BUTTONS
+ $w("#radioGroup1").onChange(function () {
+  let selectedIndex = $w("#radioGroup1").selectedIndex
+     console.log(selectedIndex)
+  if (selectedIndex===0) {function1();}
+  if (selectedIndex===1) {function2();}
+ });
+
+ function function1(){$w('#bookingMultiStateBox').changeState("acquireDetails2")}
+ function function2(){$w('#bookingMultiStateBox').changeState("enquiryForm")}
+
+
+ $w("#radioGroup2").onChange(function () {
+  let selectedIndex = $w("#radioGroup2").selectedIndex
+     console.log(selectedIndex)
+  if (selectedIndex===0) {function3();}
+  if (selectedIndex===1) {function4();}
+ });
+
+ function function3(){$w('#bookingMultiStateBox').changeState("propertyPurchase1")}
+ function function4(){$w('#bookingMultiStateBox').changeState("remortgageOptions1")}
+
+
+ $w("#radioGroup3").onChange(function () {
+  let selectedIndex = $w("#radioGroup3").selectedIndex
+     console.log(selectedIndex)
+  if (selectedIndex===0) {function5();}
+  if (selectedIndex===1) {function6();}
+ });
+
+ function function5(){$w('#bookingMultiStateBox').changeState("propertyPurchase2")}
+ function function6(){$w('#bookingMultiStateBox').changeState("remortgageOptions2")}
+
+
+ $w("#radioGroup4").onChange(function () {
+  let selectedIndex = $w("#radioGroup4").selectedIndex
+     console.log(selectedIndex)
+  if (selectedIndex===0) {function7();}
+  if (selectedIndex===1) {function8();}
+  if (selectedIndex===2) {function9();}
+  if (selectedIndex===3) {function10();}
+ });
+
+ function function7(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+ function function8(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+ function function9(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+ function function10(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+
+
+ $w("#radioGroup5").onChange(function () {
+  let selectedIndex = $w("#radioGroup5").selectedIndex
+     console.log(selectedIndex)
+  if (selectedIndex===0) {function11();}
+  if (selectedIndex===1) {function12();}
+ });
+
+ function function11(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+ function function12(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+
+
+ $w("#radioGroup6").onChange(function () {
+  let selectedIndex = $w("#radioGroup6").selectedIndex
+     console.log(selectedIndex)
+  if (selectedIndex===0) {function13();}
+  if (selectedIndex===1) {function14();}
+ });
+
+ function function13(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+ function function14(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+
+
+ //NEXT BUTTONS
+ $w("#nextButton0").onClick(function () {
+  let selectedIndex = $w("#radioGroup1").selectedIndex
+     console.log(selectedIndex)
+  if (selectedIndex===0) {function15();}
+  if (selectedIndex===1) {function16();}
+ });
+
+ function function15(){$w('#bookingMultiStateBox').changeState("propertyPurchase1")}
+ function function16(){$w('#bookingMultiStateBox').changeState("enquiryForm")}
+
+
+ $w("#nextButton1").onClick(function () {
+  let selectedIndex = $w("#radioGroup2").selectedIndex
+     console.log(selectedIndex)
+  if (selectedIndex===0) {function17();}
+  if (selectedIndex===1) {function18();}
+ });
+
+ function function17(){$w('#bookingMultiStateBox').changeState("propertyPurchase2")}
+ function function18(){$w('#bookingMultiStateBox').changeState("remortgageOptions2")}
+
+
+ $w("#nextButton2").onClick(function () {
+  let selectedIndex = $w("#radioGroup3").selectedIndex
+     console.log(selectedIndex)
+  if (selectedIndex===0) {function19();}
+  if (selectedIndex===1) {function20();}
+  if (selectedIndex===2) {function21();}
+  if (selectedIndex===3) {function22();}
+ });
+ 
+
+ function function19(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+ function function20(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+ function function21(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+ function function22(){$w('#bookingMultiStateBox').changeState("bookingForm")}
+
+
+});
+
+
+$w.onReady(function () {
+
+
+ //DATA VALIDATION 1
+ $w("#bookingFirstName, #bookingLastName, #bookingPhoneNumber, #bookingEmail").onChange(function () {
+   if ($w("#bookingFirstName").value.length > 0 && $w("#bookingLastName").value.length > 0 && $w("#bookingPhoneNumber").value.length > 0 && $w("#bookingEmail").value.length > 0) {
+      $w("#submitButton1").enable();
+   } else { $w("#submitButton1").disable(); }
+ });
+
+
+ //SUBMIT BUTTON 1
+ $w("#submitButton1").onClick(function () {
+   $w("#submitButton1").label = "Please wait..."
+   $w("#submitButton1").disable();
+ });
+
+
+ //AFTER SAVE 1
+ $w("#dataset1").onAfterSave(function () {
+   $w("#submitButton1").label = "Submit";
+   $w("#submitButton1").enable();
+   $w("#bookingMultiStateBox").changeState("bookingCTA");
+ });
+
+
+ //ON ERROR 1
+ $w("#dataset1").onError(function () {
+   $w("#submitButton1").label = "Submit";
+   $w("#submitButton1").enable();
+ });
+
+
+ //DATA VALIDATION 3
+ $w("#enquiryFirstName, #enquiryLastName, #enquiryPhoneNumber, #enquiryEmail").onChange(function () {
+   if ($w("#enquiryFirstName").value.length > 0 && $w("#enquiryLastName").value.length > 0 && $w("#enquiryPhoneNumber").value.length > 0 && $w("#enquiryEmail").value.length > 0) {
+      $w("#submitButton3").enable();
+   } else { $w("#submitButton3").disable(); }
+ });
+
+
+ //SUBMIT BUTTON 3
+ $w("#submitButton3").onClick(function () {
+   $w("#submitButton3").label = "Please wait..."
+   $w("#submitButton3").disable();
+ });
+
+
+ //AFTER SAVE 3
+ $w("#dataset1").onAfterSave(function () {
+   $w("#submitButton3").label = "Submit";
+   $w("#submitButton3").enable();
+   $w("#bookingMultiStateBox").changeState("successPage2");
+ });
+
+ 
+ //ON ERROR 3
+ $w("#dataset1").onError(function () {
+   $w("#submitButton3").label = "Submit";
+   $w("#submitButton3").enable();
+ });
+
+
+});

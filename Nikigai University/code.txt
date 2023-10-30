@@ -1,0 +1,229 @@
+import { contacts } from 'wix-crm';
+import { triggeredEmails } from 'wix-crm';
+
+$w.onReady(function () {
+
+    $w('#next').onClick(() => {
+        if ($w('#tabBox').currentState.id == $w('#tab1').id) {
+            $w('#tabBox').changeState('tab3');
+        } else if ($w('#tabBox').currentState.id == $w('#tab5').id) {
+            $w('#submit').show();
+            $w('#next').hide();
+        } else {
+            const currentState = $w('#tabBox').currentState.id;
+            console.log(currentState);
+            const stateNumber1 = Number(currentState.slice(-1));
+            const nextState = `tab${stateNumber1 + 1}`; // Use backticks for string interpolation
+            console.log(`tab${stateNumber1 + 1}`);
+            //console.log(currentState, stateNumber1, nextState);
+            $w('#tabBox').changeState(nextState); // Remove the quotes around nextState}
+        }
+    });
+
+    $w('#back').onClick(() => {
+        if ($w('#tabBox').currentState.id == $w('#tab2').id) {
+            $w('#tabBox').changeState('tab0');
+        }
+        else{
+        const currentState = $w('#tabBox').currentState.id;
+        console.log(currentState);
+        const stateNumber = Number(currentState.slice(-1));
+        const nextState = `tab${stateNumber - 1}`;
+        console.log(`tab${stateNumber - 1}`); // Use backticks for string interpolation
+        //console.log(currentState, stateNumber, nextState);
+        $w('#tabBox').changeState(nextState); // Remove the quotes around nextState
+        $w('#submit').hide();
+        $w('#next').show();}
+    });
+
+    $w('#q1c1').onClick(() => {
+        $w('#tabBox').changeState($w('#tab1').id);
+        $w('#back').enable();
+    });
+    $w('#q1c2').onClick(() => {
+        $w('#tabBox').changeState($w('#tab2').id);
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q2c1').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq2c1').hidden) {
+            $w('#tq2c1').show();
+        } else {
+            $w('#tq2c1').hide();
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q2c2').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq2c2').hidden) {
+            $w('#tq2c2').show();
+        } else {
+            $w('#tq2c2').hide();
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q2c3').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq2c3').hidden) {
+            $w('#tq2c3').show();
+        } else {
+            $w('#tq2c3').hide();
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q3c1').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq3c1').hidden) {
+            $w('#tq3c1').show();
+        } else {
+            $w('#tq3c1').hide();
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q3c2').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq3c2').hidden) {
+            $w('#tq3c2').show();
+        } else {
+            $w('#tq3c2').hide();
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q3c3').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq3c3').hidden) {
+            $w('#tq3c3').show();
+        } else {
+            $w('#tq3c3').hide();
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q5c1').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq5c1').hidden) {
+            $w('#tq5c1').show();
+        } else {
+            $w('#tq5c1').hide();
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+    $w('#q5c2').onClick(() => {
+        //$w('#tabBox').changeState($w('#tab2').id);
+        if ($w('#tq5c2').hidden) {
+            $w('#tq5c2').show();
+        } else {
+            $w('#tq5c2').hide();
+        }
+        $w('#next').enable();
+        $w('#back').enable();
+        if ($w('#tabBox').currentState.id == $w('#tab0').id) {
+            $w('#next').disable();
+            $w('#back').disable();
+        }
+    });
+
+    $w('#sure').onClick(() => {
+
+        $w('#tabBox').changeState('tab4');
+
+    });
+    $w('#maybe').onClick(() => {
+        $w('#tabBox').changeState('tab4');
+    });
+
+    //trigered email
+
+  $w('#submit').onClick(() => {
+    // Disable the submit button
+    $w('#submit').disable();
+    $w('#back').disable();
+
+    const contactInfo = {
+        emails: [{
+            email: $w('#email').value
+        }]
+    };
+    const my_Id = "d714e600-2737-45b5-b913-5d44711ac12a";
+
+    contacts.appendOrCreateContact(contactInfo)
+        .then((resolvedContact) => {
+            // Check if resolvedContact is not null or undefined
+            if (resolvedContact) {
+
+                // Sending consultation email to the newly created contact
+                triggeredEmails.emailContact('TosRwb7', resolvedContact.contactId)
+                    .then(() => {
+                        console.log("Consultation email sent to new contact.");
+                    })
+                    .catch((error) => {
+                        console.error("Error sending consultation email to new contact:", error);
+                    });
+
+                // Sending consultation email to the member with ID "my_Id"
+                triggeredEmails.emailContact('TosRwb7', my_Id)
+                    .then(() => {
+                        console.log("Consultation email sent to member.");
+                    })
+                    .catch((error) => {
+                        console.error("Error sending consultation email to member:", error);
+                    });
+            }
+
+            console.log(resolvedContact);
+        })
+        .catch((error) => {
+            console.error("Error appending or creating contact:", error);
+        })
+        .finally(() => {
+            // Enable the submit button after 3 seconds
+            setTimeout(() => {
+                $w('#submit').enable();
+
+                // Change the state to 'tab6' after another 3 seconds
+                setTimeout(() => {
+                    $w('#tabBox').changeState('tab6');
+                }, 3000);
+            }, 3000);
+        });
+});
+
+});

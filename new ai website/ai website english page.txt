@@ -1,0 +1,59 @@
+import { aiCompletion } from 'backend/ChatGPTInegration.jsw';
+import wixWindow from 'wix-window';
+import { getImages } from 'backend/PixabayVersuchIntegartionALA.jsw';
+
+let location;
+let words;
+let chatArray = [];
+
+async function askQuestion() {
+  $w("#loadingSpinner").show();
+  const userPrompt = $w("#promptInput").value;
+  const language = $w('#languageDropdown').value;
+
+  chatArray.push({ role: "user", content: `Here is the client's question: ${userPrompt}. Answer the question in ${language}` });
+
+  const answer = await aiCompletion(chatArray);
+   $w('#answerBox').value = `${answer}\n\nViele Spaß bei Ihrer Reise und liebe Grüße,\n\nIhr Ki-Urlaub.de-Team\n\n`;
+  
+  chatArray.push({ role: "assistant", content: `${answer}.` });
+
+  words = answer.split(" ");
+  location = getLocation(answer);
+
+  $w('#loadingSpinner').hide();
+
+  // Call the function to update image and background
+  updateImageAndBackground();
+}
+function getLocation(words) {
+  const [firstWord, secondWord] = words;
+  return `${firstWord}+${secondWord}`;
+}
+async function updateImageAndBackground() {
+  const imgSrc = await getImages(location);
+  $w('#column2').background.src = imgSrc;
+}
+
+
+
+$w.onReady(function () {
+  $w("#askButton").disable();
+
+  $w("#captcha").onVerified(() => {
+    $w("#askButton").enable();
+    $w('#captcha').collapse();
+  });
+
+  $w('#askButton').onClick(() => {
+    askQuestion();
+  });
+});
+
+export function lightboxButton_click(event) {
+  const dataToSend = {
+    generation: $w('#answerBox').value,
+    question: $w('#promptInput').value
+  };
+  wixWindow.openLightbox("Ki-Vorschlag merken", dataToSend);
+}

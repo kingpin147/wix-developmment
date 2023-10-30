@@ -1,0 +1,72 @@
+import { contacts, triggeredEmails } from 'wix-crm';
+
+$w.onReady(function () {
+    $w("#submit").onClick(() => {
+        const contactInfo = {
+            name: {
+                first: $w('#fname').value,
+                last: $w('#lname').value,
+            },
+            emails: [{
+                email: $w('#email').value
+            }]
+        };
+
+        contacts.appendOrCreateContact(contactInfo)
+            .then((resolvedContact) => {
+                if (resolvedContact) {
+                    $w('#thankyou').show();
+                    const contactId = resolvedContact.contactId;
+		     //return resolvedContact;
+
+                    triggeredEmails.emailContact('makeup_quiz', contactId, {
+                        variables: {
+                            firstName: $w('#fname').value,
+                            lastName: $w('#lname').value
+                        }
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                    });
+
+                    setTimeout(() => {
+                        triggeredEmails.emailContact('follow_up', contactId, {
+                            variables: {
+                                firstName: $w('#fname').value,
+                                lastName: $w('#lname').value
+                            }
+                        });
+                    }, 7 * 24 * 60 * 60 * 1000); // 7 days
+
+                    setTimeout(() => {
+                        triggeredEmails.emailContact('follow_up', contactId, {
+                            variables: {
+                                firstName: $w('#fname').value,
+                                lastName: $w('#lname').value
+                            }
+                        });
+                    }, 14 * 24 * 60 * 60 * 1000); // 14 days
+
+                    setTimeout(() => {
+                        triggeredEmails.emailContact('follow_up', contactId, {
+                            variables: {
+                                firstName: $w('#fname').value,
+                                lastName: $w('#lname').value
+                            }
+                        });
+                    }, 21 * 24 * 60 * 60 * 1000); // 21 days
+                } else {
+                    $w('#thankyou').hide();
+                }
+
+                console.log(resolvedContact);
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+    });
+});
+
+export function email_input(event) {
+    $w('#submit').enable();
+}

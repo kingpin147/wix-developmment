@@ -1,0 +1,71 @@
+
+$w('#mediaRepeater').onItemReady(($item, itemData, index) => {
+  $item('#media').src = itemData.src;
+  if (index === 0) {
+    $item('#mediaBackground').style.backgroundColor = "black";
+    $item('#mediaOverlay').show();
+  }
+  $item('#media').onClick(() => {
+    $w('#mainMedia').src = itemData.src;
+    $w('#mediaBackground').style.backgroundColor = "white";
+    $item('#mediaBackground').style.backgroundColor = "black";
+    $w('#mediaOverlay').hide();
+    $item('#mediaOverlay').show();
+  });
+  $item("#mediaOverlay").onMouseIn(()=>{
+       $w('#mediaOverlay').hide();
+  })
+  
+  $item("#media").onMouseOut(()=>{
+       $w('#mediaOverlay').show();
+  })
+});
+
+$w.onReady(function () {
+  $w('#dynamicProDataset').onReady(() => {
+    const product = $w("#dynamicProDataset").getCurrentItem();
+    $w('#mainMedia').src = product.mainMedia;
+    console.log(product);
+
+    const populateMediaRepeater = () => {
+      const mediaData = product.mediaItems.map((item, index) => ({ ...item, _id: index.toString() }));
+      $w('#mediaRepeater').data = mediaData;
+    };
+    populateMediaRepeater();
+  });
+});
+
+
+
+
+
+/*
+inStock: true
+weight: 0
+name: "Bags"
+sku: "364215375135191"
+formattedDiscountedPrice: "₨20.00"
+productOptions: {...}
+mainMedia: "wix:image://v1/22e53e_efc1552d8050407f82ea158302d0debd~mv2.jpg/file.jpg#originWidth=4000&originHeight=4000"
+description: "I'm a product description. I'm a great place to add more details about your product such as sizing, material, care instructions and cleaning instructions."
+_id: "cd59cd36-b6d2-2cf3-9d48-81793a7bdbbd"
+discountedPrice: 20
+link-products-slug: "/products/bags"
+formattedPrice: "₨20.00"
+price: 20
+inventoryItem: "32a632c9-492d-d30c-62b7-7e86c5842442"
+_updatedDate: "Mon Jun 19 2023 10:39:09 GMT+0500 (Pakistan Standard Time)"
+slug: "bags"
+productType: "physical"
+ribbons: [...]
+mediaItems: [...]
+trackInventory: false
+customTextFields: [...]
+ribbon: ""
+currency: "PKR"
+productPageUrl: "/product-page/bags"
+manageVariants: false
+discount: {...}
+additionalInfoSections: [...]
+createdDate: "Wed May 04 2016 15:00:34 GMT+0500 (Pakistan Standard Time)"
+*/ 

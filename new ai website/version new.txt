@@ -1,0 +1,60 @@
+import { aiCompletion } from 'backend/ChatGPTInegration.jsw';
+import wixWindow from 'wix-window';
+import { getImages } from 'backend/PixabayVersuchIntegartionALA.jsw';
+
+let chatArray = [];
+let wordsArray;
+let firstWord;
+
+async function askQuestion() {
+  console.log("function is started");
+  $w("#loadingSpinner").show();
+  const userPrompt = $w("#promptInput").value;
+  const language = $w('#languageDropdown').value;
+
+  chatArray = [
+    { role: "assistant", content: `Here is the client's question: ${userPrompt}. Answer the question in ${language}. You are a multi-lingual assistant for clients in an international travel and tourism company based in Europe. Before you begin with the answer, please state the travel destination in square brackets.`}
+  ];
+  let answer = await aiCompletion(chatArray);
+  let answer2 = answer.choices[0].message.content;// get chatgpt response
+  console.log(answer);
+  console.log(answer2);
+  wordsArray = answer2.split(" "); // split words
+  [firstWord] = wordsArray; // gets first word from response
+  console.log(firstWord); // Output: "location"
+  console.log(wordsArray);
+
+  $w('#answerBox').value = answer + "\n\nHave fun on your trip and best regards,\n\nYour Ki-Urlaub.de team\n\n";
+  //chatArray.push({ role: "assistant", content: `${answer}.` });
+  console.log("function is ended");
+  // Call the function to update image and background
+  updateImageAndBackground();
+  $w('#loadingSpinner').hide();
+}
+
+async function updateImageAndBackground() {
+  const imgSrc = await getImages(firstWord); // gives location from response to pixabay api
+  $w('#column2').background.src = imgSrc; // gets image url and change background
+}
+
+$w.onReady(function () {
+  $w("#askButton").disable();
+
+  $w('#askButton').onClick(() => {
+    // Call the function to update image and background
+    askQuestion();
+  });
+});
+
+export function lightboxButton_click(event) {
+  const dataToSend = {
+    generation: $w('#answerBox').value,
+    question: $w('#promptInput').value
+  };
+  wixWindow.openLightbox("Ki-Vorschlag merken", dataToSend);
+}
+
+$w("#captcha").onVerified(() => { //captcha verification
+  $w("#askButton").enable();
+  $w('#captcha').collapse();
+});

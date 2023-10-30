@@ -1,0 +1,58 @@
+// Velo API Reference: https://www.wix.com/velo/reference/api-overview/introduction
+import { aiCompletion } from 'backend/ChatGPTInegration.jsw';
+import wixWindow from 'wix-window';
+import { getImages } from 'backend/PixabayVersuchIntegartionALA.jsw';
+import { getImage } from 'backend/PixabayVersuchIntegartionALA.jsw';
+
+$w.onReady(function () {
+    let chatArray = [];
+    $w("#askButton").enable();
+
+    const askQuestion = async () => {
+        $w("#loadingSpinner").show();
+        const user_prompt = $w("#promptInput").value;
+        const language = $w('#languageDropdown').value;
+        console.log({ "role": "user", "content": `Here is the clients question: ${user_prompt}. Answer the question in ${language}` })
+        chatArray.push({ "role": "user", "content": `Here is the clients question: ${user_prompt}. Answer the question in ${language}` })
+        const answer = await aiCompletion(chatArray);
+        let words = answer.split(" ");
+        console.log(words, "words")
+        let firstWord = words[0]
+        let secondWord = words[1]
+        let location = `${firstWord}+${secondWord}`
+        console.log(location, "location")
+        var textBoxLocation = $w('#location').value;
+        const res = await getImages(location);
+        const imgSrc = res[0];
+        //console.log(imgSrc.largeImageURL, "img")
+       
+        $w('#answerBox').value = answer + "\n\nViele Spaß bei Ihrer Reise und liebe Grüße,\n\nIhr Ki-Urlaub.de-Team\n\n";
+        chatArray.push({ "role": "assistant", "content": `${answer}.` })
+        console.log(answer)
+         $w('#column2').background.src = imgSrc.largeImageURL;
+
+        $w('#loadingSpinner').hide();
+    };
+
+    $w("#captcha").onVerified(() => {
+        $w("#askButton").enable();
+        $w('#captcha').collapse();
+    })
+    $w('#askButton').onClick(askQuestion);
+});
+
+export function lightboxButton_click(event) {
+    const dataToSend = {
+        generation: $w('#answerBox').value,
+        question: $w('#promptInput').value
+    };
+    wixWindow.openLightbox("Ki-Vorschlag merken", dataToSend);
+}
+
+export async function askButton_click(event) {
+    var location = $w('#location').value;
+    const res = await getImage(location);
+    const imgSrc = res[0];
+
+    $w('#column2').background.src = imgSrc.largeImageURL;
+}

@@ -1,0 +1,22 @@
+
+let ratings;
+$w.onReady(()=>{
+ratings=parseInt($w("#radioRating").value,10)
+console.log("onready")
+
+
+})
+export function dataset1_afterSave() {
+    console.log("rating",ratings)
+	$w("#dataset1").setFieldValue("overallExperience",ratings );
+}
+
+/**
+*	Adds an event handler that runs when an input element's value
+ is changed.
+	[Read more](https://www.wix.com/corvid/reference/$w.ValueMixin.html#onChange)
+*	 @param {$w.Event} event
+*/
+export function radioRating_change(event) {
+	ratings=parseInt($w("#radioRating").value,10)
+}

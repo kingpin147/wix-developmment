@@ -1,0 +1,60 @@
+import { contacts } from 'wix-crm';
+import { triggeredEmails } from 'wix-crm';
+
+$w.onReady(function () {
+    $w("#dataset1").onAfterSave(() => {
+        console.log("data is saved")
+        $w('#submit').enable();
+        $w('#loading').hide();
+    });
+});
+
+export function submit_click(event) {
+    $w('#submit').disable();
+    $w('#loading').show();
+
+    const contactInfo = {
+    name: {
+        first: $w('#fname').value,
+        last: $w('#lname').value,
+    },
+    emails: [{
+        email: $w('#email').value
+    }]
+};
+
+const my_Id = "5ea7c16c-735b-4e51-a222-6a9211f17707";
+
+contacts.appendOrCreateContact(contactInfo)
+    .then((resolvedContact) => {
+        // Check if resolvedContact is not null or undefined
+        if (resolvedContact) {
+            
+            
+            // Sending consultation email to the newly created contact
+            triggeredEmails.emailContact('ToZBccV', resolvedContact.contactId)
+                .then(() => {
+                    console.log("Consultation email sent to new contact.");
+                })
+                .catch((error) => {
+                    console.error("Error sending consultation email to new contact:", error);
+                });
+            
+            // Sending consultation email to the member with ID "my_Id"
+            triggeredEmails.emailContact('ToZBccV', my_Id)
+                .then(() => {
+                    console.log("Consultation email sent to member.");
+                })
+                .catch((error) => {
+                    console.error("Error sending consultation email to member:", error);
+                });
+        } 
+
+        console.log(resolvedContact);
+    })
+    .catch((error) => {
+        console.error("Error appending or creating contact:", error);
+    });
+
+
+}
