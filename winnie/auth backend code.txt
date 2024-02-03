@@ -1,0 +1,38 @@
+import { authentication } from 'wix-members-backend';
+
+export const registerSiteMember = async(email, password, options) => {    
+    try{
+		const registrationResult = await authentication.register(email, password, options)
+		{
+            return {
+                status: true,
+                //result:  registrationResult
+            };
+			
+		}
+	}catch(error){
+        return {
+                status: false,
+                result: error
+            };
+	}
+}
+
+
+export const approveSiteMember = async(token) => {    
+    try{
+		const sessionToken = await authentication.approveByToken(token)
+		{
+            return {
+                status: true,
+                result:  sessionToken
+            };
+			
+		}
+	}catch(error){
+        return {
+                status: false,
+                result: error
+            };
+	}
+}

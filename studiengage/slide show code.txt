@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <style>
+.marquee {
+  position: relative;
+  width: 100vw;
+  max-width: 100%;
+  height: 40px;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  vertical-align: middle;
+}
+
+.track {
+  position: absolute;
+  white-space: nowrap;
+  will-change: transform;
+  animation: marquee 32s linear infinite;
+}
+      
+.marquee-list{
+    display: flex;
+}
+      
+.marquee-list li{
+    list-style: none;
+    margin: 0px 50px;
+    color: #EFCEDF;
+    font-family: Europa;
+    font-size: 15px;
+    letter-spacing: 0.09px; 
+}
+      
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+</style>
+</head>
+<body>
+    <div class="marquee">
+        <div class="track">
+          <div class="content">
+            <ul class="marquee-list">
+                <li>REAL REPRESENTATION, INSPIRED RESULTS.</li>
+                <li>REAL REPRESENTATION, INSPIRED RESULTS.</li>
+                <li>REAL REPRESENTATION, INSPIRED RESULTS.</li>
+                <li>REAL REPRESENTATION, INSPIRED RESULTS.</li>
+                <li>REAL REPRESENTATION, INSPIRED RESULTS.</li>
+                <li>REAL REPRESENTATION, INSPIRED RESULTS.</li>
+                <li>REAL REPRESENTATION, INSPIRED RESULTS.</li>
+                <li>REAL REPRESENTATION, INSPIRED RESULTS.</li>
+                <li>REAL REPRESENTATION, INSPIRED RESULTS.</li>
+                <li>REAL REPRESENTATION, INSPIRED RESULTS.</li>
+            </ul> 
+        </div>
+      </div>
+
+</body>
+</html>
+
+
+
+$w.onReady(function () {
+
+    var states = ['t1', 't2', 't3', 't4', 't5', 't6'];
+    var stateNumber = 0;
+
+    function slideShow() {
+        $w('#tB').changeState(states[stateNumber]);
+        if (stateNumber < states.length - 1) {
+            stateNumber++;
+        } else {
+            stateNumber = 0;
+        }
+        setTimeout(slideShow, 6000);
+    }
+    slideShow();
+
+    //BUTTON ACTIONS
+
+    //STATE 1
+
+    $w('#s1b1').onClick(() => {
+        $w('#tB').changeState('t6');
+        
+    });
+    $w('#s1b2').onClick(() => {
+        $w('#tB').changeState('t2');
+         console.log($w('#tB').currentState);
+    });
+
+    $w('#s1s2').onClick(() => {
+        $w('#tB').changeState('t2');
+         
+    });
+
+    $w('#s1s3').onClick(() => {
+        $w('#tB').changeState('t3');
+        
+    });
+
+    $w('#s1s4').onClick(() => {
+        $w('#tB').changeState('t4');
+        
+    });
+
+    $w('#s1s5').onClick(() => {
+        $w('#tB').changeState('t5');
+         
+    });
+
+    $w('#s1s6').onClick(() => {
+        $w('#tB').changeState('t6');
+         
+    });
+
+    //STATE 2
+
+    $w('#s2b1').onClick(() => {
+        $w('#tB').changeState('t1');
+    });
+    $w('#s2b2').onClick(() => {
+        $w('#tB').changeState('t3');
+        console.log($w('#tB').currentState);
+    });
+
+    $w('#s2s1').onClick(() => {
+        $w('#tB').changeState('t1');
+    });
+
+    $w('#s2s3').onClick(() => {
+        $w('#tB').changeState('t3');
+    });
+
+    $w('#s2s4').onClick(() => {
+        $w('#tB').changeState('t4');
+    });
+
+    $w('#s2s5').onClick(() => {
+        $w('#tB').changeState('t5');
+    });
+
+    $w('#s2s6').onClick(() => {
+        $w('#tB').changeState('t6');
+    });
+
+    //STATE 3
+
+    $w('#s3b1').onClick(() => {
+        $w('#tB').changeState('t2');
+    });
+    $w('#s3b2').onClick(() => {
+        $w('#tB').changeState('t4');
+        console.log($w('#tB').currentState);
+    });
+
+    $w('#s3s1').onClick(() => {
+        $w('#tB').changeState('t1');
+        console.log($w('#tB').currentState);
+    });
+
+    $w('#s3s2').onClick(() => {
+        $w('#tB').changeState('t2');
+    });
+
+    $w('#s3s4').onClick(() => {
+        $w('#tB').changeState('t4');
+    });
+
+    $w('#s3s5').onClick(() => {
+        $w('#tB').changeState('t5');
+    });
+
+    $w('#s3s6').onClick(() => {
+        $w('#tB').changeState('t6');
+    });
+
+    //STATE 4
+
+    $w('#s4b1').onClick(() => {
+        $w('#tB').changeState('t3');
+    });
+    $w('#s4b2').onClick(() => {
+        $w('#tB').changeState('t5');
+         console.log($w('#tB').currentState);
+    });
+
+    $w('#s4s1').onClick(() => {
+        $w('#tB').changeState('t1');
+    });
+
+    $w('#s4s2').onClick(() => {
+        $w('#tB').changeState('t2');
+        console.log($w('#tB').currentState);
+    });
+
+    $w('#s4s3').onClick(() => {
+        $w('#tB').changeState('t3');
+    });
+
+    $w('#s4s5').onClick(() => {
+        $w('#tB').changeState('t5');
+    });
+
+    $w('#s4s6').onClick(() => {
+        $w('#tB').changeState('t6');
+    });
+
+    //STATE 5
+
+    $w('#s5b1').onClick(() => {
+        $w('#tB').changeState('t4');
+    });
+    $w('#s5b2').onClick(() => {
+        $w('#tB').changeState('t6');
+         console.log($w('#tB').currentState);
+    });
+
+    $w('#s5s1').onClick(() => {
+        $w('#tB').changeState('t1');
+    });
+
+    $w('#s5s2').onClick(() => {
+        $w('#tB').changeState('t2');
+    });
+
+    $w('#s5s3').onClick(() => {
+        $w('#tB').changeState('t3');
+    });
+
+    $w('#s5s4').onClick(() => {
+        $w('#tB').changeState('t4');
+        console.log($w('#tB').currentState);
+    });
+
+    $w('#s5s6').onClick(() => {
+        $w('#tB').changeState('t6');
+    });
+
+    //STATE 6
+
+    $w('#s6b1').onClick(() => {
+        $w('#tB').changeState('t5');
+    });
+    $w('#s6b2').onClick(() => {
+        $w('#tB').changeState('t1');
+         console.log($w('#tB').currentState);
+    });
+
+    $w('#s6s1').onClick(() => {
+        $w('#tB').changeState('t1');
+    });
+
+    $w('#s6s2').onClick(() => {
+        $w('#tB').changeState('t2');
+    });
+
+    $w('#s6s3').onClick(() => {
+        $w('#tB').changeState('t3');
+    });
+
+    $w('#s6s4').onClick(() => {
+        $w('#tB').changeState('t4');
+    });
+
+    $w('#s6s5').onClick(() => {
+        $w('#tB').changeState('t5');
+        console.log($w('#tB').currentState);
+    });
+
+});

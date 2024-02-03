@@ -1,0 +1,415 @@
+At best, the plugin is dynamically structured in the backend.
+
+I can enter a question
+I can assign one of the following professions to each question
+Elektroniker*in
+Elektroniker*in (AVG)
+Studium Elektrotechnik
+Studium BWL Industrie
+Studium Bauingnieurwesen
+Feinwerkmechaniker*in
+Eisenbahner*in im Betriebsdienst – Lokführer und Transport
+Eisenbahner*in im Betriebsdienst – Zugverkehrssteuerung 
+Industriekaufmann*frau
+Kfz-Mechatroniker*in
+
+I can assign text and graphics to each questioner above 
+Yes / No answers are displayed as in the click dummy:
+https://www.stelle-deines-lebens.de/matcher-frage-01-1
+
+A variable should be created for each profession
+If a question is answered with yes, each variable (occupation) assigned to the question is incremented
+
+
+Start
+|
+V Set total score to 0
+|
+V Question 1
+|Yes? -&gt; Go to option A1
+|No? -&gt; Set points for question 1 to 0 and go to question 2
+|
+
+V Question 2
+|Yes? -&gt; Go to option A2
+|No? -&gt; Set points for question 2 to 0 and go to question 3
+|
+... (Repeat the process for all further questions) ...
+|
+V Question 18
+|Yes? -&gt; Go to option A18
+|No? -&gt; Set points for question 18 to 0 and calculate the result
+|
+V Calculate the percentage result:
+| Total score / Maximum possible score * 100% (I'm not sure if this is correct from a programming point of view)
+|
+V End with percentage result
+
+The result (the corresponding professions) is displayed first by points highest as shown in the clickdummy
+https://www.stelle-deines-lebens.de/matcher-ergebnis
+The professions are linked to the corresponding landing pages
+
+Unterhalb der Liste gibt es 2 Buttons "Nochmal" (Hiermit wird die Umfrage neugestartet) und "Alle Ausbildungen" zeigt auf https://www.stelle-deines-lebens.de/ausbildung.
+
+Ich hoffe du hast das alles verstanden die zuordungen finndest du auf der Exelliste
+
+
+import wixData from 'wix-data';
+import wixLocation from 'wix-location';
+
+let answers = [];
+let answers1 = [];
+let answers2 =[];
+let selected = [];
+let newValue;
+let selectedIndex;
+let total = 0;
+let progressBar = 0
+let ones = 0;
+let twos = 0
+let threes = 0;
+let fours = 0;
+let fives = 0;
+let zeros = 0;
+let category;
+let choice1Array = [];
+let choice2Array = [];
+let choice3Array = [];
+let choice4Array = [];
+let choice5Array = [];
+
+let country_list = ["USA", "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Anguilla", "Antigua &amp; Barbuda", "Argentina", "Armenia", "Aruba", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bermuda", "Bhutan", "Bolivia", "Bosnia &amp; Herzegovina", "Botswana", "Brazil", "British Virgin Islands", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Cape Verde", "Cayman Islands", "Chad", "Chile", "China", "Colombia", "Congo", "Cook Islands", "Costa Rica", "Cote D Ivoire", "Croatia", "Cruise Ship", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Estonia", "Ethiopia", "Falkland Islands", "Faroe Islands", "Fiji", "Finland", "France", "French Polynesia", "French West Indies", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Gibraltar", "Greece", "Greenland", "Grenada", "Guam", "Guatemala", "Guernsey", "Guinea", "Guinea Bissau", "Guyana", "Haiti", "Honduras", "Hong Kong", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Isle of Man", "Israel", "Italy", "Jamaica", "Japan", "Jersey", "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Kyrgyz Republic", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Macau", "Macedonia", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Mauritania", "Mauritius", "Mexico", "Moldova", "Monaco", "Mongolia", "Montenegro", "Montserrat", "Morocco", "Mozambique", "Namibia", "Nepal", "Netherlands", "Netherlands Antilles", "New Caledonia", "New Zealand", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman", "Pakistan", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Puerto Rico", "Qatar", "Reunion", "Romania", "Russia", "Rwanda", "Saint Pierre &amp; Miquelon", "Samoa", "San Marino", "Satellite", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "South Africa", "South Korea", "Spain", "Sri Lanka", "St Kitts &amp; Nevis", "St Lucia", "St Vincent", "St. Lucia", "Sudan", "Suriname", "Swaziland", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor L'Este", "Togo", "Tonga", "Trinidad &amp; Tobago", "Tunisia", "Turkey", "Turkmenistan", "Turks &amp; Caicos", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "Uruguay", "Uzbekistan", "Venezuela", "Vietnam", "Virgin Islands (US)", "Yemen", "Zambia", "Zimbabwe"];
+
+$w.onReady(function () {
+    $w('#start').onClick(() => {
+        $w('#quizBox').changeState("tab1");
+        $w('#progressBar1').value = progressBar;
+        console.log("State is changed to tab1");
+    });
+
+    console.log("tab1");
+    
+    wixData.query("Questionswithoutpoints")
+        .find()
+        .then((results) => {
+            //console.log(results.items);
+            $w("#repeater2").onItemReady(($item, itemData) => {
+                // console.log(itemData);
+                $item("#introques").text = itemData.question;
+                if (itemData) {
+                    let radioOptions1 = [
+                        { label: itemData.choice_1, value: itemData.choice_1 },
+                        { label: itemData.choice_2, value: itemData.choice_2 },
+                        { label: itemData.choice_3, value: itemData.choice_3 },
+                        { label: itemData.choice_4, value: itemData.choice_4 },
+                        { label: itemData.choice_5, value: itemData.choice_5 }
+                    ];
+                    $item("#radioGroup2").options = radioOptions1;
+                    
+                } else if ($item("#radioGroup2").options == null) {
+                    $item("#radioGroup2").hide();
+                }
+            });
+        })
+        .catch((error) => {
+            console.error('Query error:', error);
+        });
+
+
+    wixData.query("Quiz")
+        .find()
+        .then((results) => {
+            console.log(results.items);
+            $w("#repeater1").onItemReady(($item, itemData) => {
+                // console.log(itemData);
+                $item("#question").text = itemData.question;
+                if (itemData) {
+                    let radioOptions = [
+                        { label: itemData.choice1, value: itemData.choice1 },
+                        { label: itemData.choice2, value: itemData.choice2 },
+                        { label: itemData.choice3, value: itemData.choice3 },
+                        { label: itemData.choice4, value: itemData.choice4 },
+                        { label: itemData.choice5, value: itemData.choice5 }
+                    ];
+                    $item("#radioGroup1").options = radioOptions;
+                    choice1Array.push(itemData.choice1);
+                    //console.log(choice1Array);
+                    choice2Array.push(itemData.choice2);
+                    //console.log(choice1Array);
+                    choice3Array.push(itemData.choice3);
+                    //console.log(choice1Array);
+                    choice4Array.push(itemData.choice4);
+                    //console.log(choice1Array);
+                    choice5Array.push(itemData.choice5);
+                    //console.log(choice1Array);
+                } else if ($item("#radioGroup1").options == null) {
+                    $item("#radioGroup1").hide();
+                }
+            });
+        })
+        .catch((error) => {
+            console.error('Query error:', error);
+        });
+    // $w('#repeater1').forEachItem(($item, itemData, index) => {
+    //     if($item("#radioGroup1").options[0].value== null || $item("#radioGroup1").options[1].value== null || $item("#radioGroup1").options[2].value== null || $item("#radioGroup1").options[3].value== null || $item("#radioGroup1").options[4].value== null)
+    //     {console.log(itemData);}
+    // });
+
+ $w('#radioGroup2').onChange((event) => {
+
+        newValue = event.target.value;
+        selectedIndex = event.target.selectedIndex;
+        //selected.push(selectedIndex);
+        answers1.push(newValue);
+        progressBar = progressBar + 3;
+        $w('#progressBar1').value = progressBar;
+        event.target.disable();
+    });
+
+    $w('#radioGroup1').onChange((event) => {
+
+        newValue = event.target.value;
+        selectedIndex = event.target.selectedIndex;
+        selected.push(selectedIndex);
+        answers.push(newValue);
+        progressBar = progressBar + 3;
+        $w('#progressBar1').value = progressBar;
+        event.target.disable();
+    });
+
+    $w('#dropdown1').options = country_list.map(country => {
+        return { label: country, value: country };
+    });
+    $w('#sbmtQuiz').onClick((event) => {
+        $w('#quizBox').changeState("tab2");
+        //$w('#progressBar2').value = 70;
+        $w('#progressBar1').value = 70;
+        answers2= answers1.concat(answers);
+        console.log(answers2);
+        //console.log(answers);
+        // for (let i = 0; i < selected.length; i++) {
+        //     const index = selected[i];
+
+        //     // Check the value at each index and add accordingly using if conditions
+        //     if (index === 0) {
+        //         ones = ones + 1;
+        //     } else if (index === 1) {
+        //         twos = twos + 2;
+        //     } else if (index === 2) {
+        //         threes = threes + 3;
+        //     } else if (index === 3) {
+        //         fours = fours + 4;
+        //     } else if (index === 4) {
+        //         fives = fives + 5;
+
+        //     } else {
+        //         // Handle unexpected values here
+        //         console.log(`Unexpected value at index ${index}`);
+        //     }
+        // }
+        for (let i = 0; i < answers.length; i++) {
+            if (answers[i] === choice1Array[i]) {
+                ones = ones + 1;
+                console.log(ones);
+            } else if (answers[i] === choice2Array[i]) {
+                twos = twos + 2;
+                console.log(twos);
+            } else if (answers[i] === choice3Array[i]) {
+                threes = threes + 3;
+                console.log(threes);
+            } else if (answers[i] === choice4Array[i]) {
+                fours = fours + 4;
+                console.log(fours);
+            } else if (answers[i] === choice5Array[i]) {
+                fives = fives + 5;
+                console.log(fives);
+            } else {
+                // Handle unexpected values here
+                console.log(`Unexpected error`);
+                zeros=zeros+0;
+                console.log(zeros);
+            }
+        }
+        let numberofquestion = choice1Array.length;
+        console.log(numberofquestion);
+        total = ((zeros + ones + twos + threes + fours + fives) / (numberofquestion));
+        // Log the total
+        console.log(`Total numbers collected from the array: ${total}`);
+        console.log(fives);
+        if (total >= 0 && total <= 2) {
+            category = 1;
+        } else if (total > 2 && total <= 3) {
+            category = 2;
+        } else if (total > 3 && total <= 4) {
+            category = 3;
+        } else if (total > 4 && total <= 5) {
+            category = 4;
+        }
+        $w("#text29").scrollTo();
+
+        let pageX = event.pageX;  
+
+        let pageY = event.pageY;
+    });
+
+    $w('#submitBtn').onClick(() => {
+        // Check the validity of each input separately
+        const input1Valid = $w('#input1').valid;
+        const input2Valid = $w('#input2').valid;
+        const input3Valid = $w('#input3').valid;
+        const input4Valid = $w('#input4').valid;
+        const input5Valid = $w('#input5').valid;
+        const input6Valid = $w('#dropdown1').valid;
+        const input7Valid = $w('#dropdown2').valid;
+        // Check if each input is valid
+        const input1Value = $w('#input1').value;
+        const input2Value = $w('#input2').value;
+        const input3Value = $w('#input3').value;
+        const input4Value = $w('#input4').value;
+        const input5Value = $w('#input5').value;
+        const input6Value = $w('#dropdown1').value;
+        const input7Value = $w('#dropdown2').value;
+        // Custom error messages for each input
+        if (!input1Valid || input1Value === null || input1Value.trim() === '') {
+            $w('#text121').text = "invalid fullname";
+        }
+
+        if (!input2Valid || input2Value === null || !isValidWorkEmail(input2Value) === true) {
+            $w('#text121').text = "Invalid work email";
+        }
+
+        if (!input3Valid || input3Value === null || input3Value.trim() === '') {
+            $w('#text121').text = "invalid job title";
+        }
+
+        if (!input4Valid || input4Value === null || input4Value.trim() === '') {
+            $w('#text121').text = "invalid answer for business unit";
+        }
+
+        if (!input5Valid || input5Value === null || input5Value.trim() === '') {
+            $w('#text121').text = "invalid phone number";
+        }
+        if (!input6Valid || input6Value === null || input6Value.trim() === '') {
+            $w('#text121').text = "select country";
+        }
+        if (!input7Valid || input7Value === null || input7Value.trim() === '') {
+            $w('#text121').text = "select response";
+        }
+
+        if (
+            input1Valid &&
+            input2Valid &&
+            input3Valid &&
+            input4Valid &&
+            input5Valid &&
+            input6Valid &&
+            input7Valid &&
+            input1Value !== null &&
+            input1Value.trim() !== '' &&
+            input2Value !== null &&
+            input2Value.trim() !== '' &&
+            input3Value !== null &&
+            input3Value.trim() !== '' &&
+            input4Value !== null &&
+            input4Value.trim() !== '' &&
+            input5Value !== null &&
+            input5Value.trim() !== '' &&
+            input6Value !== null &&
+            input6Value.trim() !== '' &&
+            input7Value !== null &&
+            input7Value.trim() !== ''
+        ) {
+            if (input1Valid && isValidWorkEmail(input2Value)) {
+                $w('#text121').text = '';
+                $w('#quizBox').changeState("tab3");
+               // $w('#progressBar3').value = 85;
+                $w('#progressBar1').value = 85;
+                
+                let toInsert = {
+                    "fullName": input1Value,
+                    "workEmail": input2Value,
+                    "jobTitle": input3Value,
+                    "phoneNumber": input5Value,
+                    "orgOrBusinessUnit": input4Value,
+                    "answers": answers2,
+                    "score": total,
+                    "country": input6Value,
+                    "responsesAreFor": input7Value,
+                    "category": category
+
+                };
+
+                wixData.insert("QuizData", toInsert)
+                    .then((item) => {
+                        console.log(item);
+                    })
+                    .catch((err) => {
+                        console.error('Insert error:', err);
+                    });
+               
+
+             } else {
+                $w('#text121').show();
+             }
+        } else {
+            $w('#text121').show();
+        }
+
+    });
+
+    function isValidWorkEmail(email) {
+        // Regex pattern for a valid email address
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        // Test if the email matches the pattern
+        if (emailPattern.test(email)) {
+            const parts = email.split('@');
+            console.log(parts);
+            const domain = parts[1].toLowerCase();
+            console.log(domain);
+            if (domain.includes('gmail.com') || domain.includes('yahoo.com') || domain.includes('hotmail.com')) {
+                console.log("invalid email")
+                return false; // Invalid email if it's from these domains
+
+            }
+            console.log("valid email");
+            return true; // Valid email
+        }
+        console.log("invalid work email pattren");
+        return false; // Invalid email if it doesn't match the pattern
+    }
+
+    $w('#scoreBtn').onClick(() => {
+       // $w('#progressBar3').value = 100;
+        $w('#progressBar1').value = 100;
+        $w('#score').text = `your score is ${total}, and you fall in category ${category}`;
+        $w('#score').show();
+        if (category == 1) {
+            setTimeout(() => {
+                // Redirect to page URL
+                wixLocation.to("/my-site-collection");
+            }, 2000);
+        } else if (category == 2) {
+            setTimeout(() => {
+                // Redirect to page URL
+                wixLocation.to("/copy-of-my-site-collection");
+            }, 2000);
+        } else if (category == 3) {
+            setTimeout(() => {
+                // Redirect to page URL
+                wixLocation.to("/copy-of-my-site-collection-1");
+            }, 2000);
+        } else if (category == 4) {
+            setTimeout(() => {
+                // Redirect to page URL
+                wixLocation.to("/copy-of-my-site-collection-2");
+            }, 2000);
+        }
+        else{
+             setTimeout(() => {
+                // Redirect to page URL
+                wixLocation.to("/my-site-collection");
+            }, 2000);
+        }
+    })
+
+});

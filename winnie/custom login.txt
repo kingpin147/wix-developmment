@@ -1,0 +1,18 @@
+import wixUsers from 'wix-users';
+import wixLocationFrontend from 'wix-location';
+import { authentication } from 'wix-members';
+
+authentication.onLogin(async (member) => {
+  const loggedInMember = await member.getMember();
+  const memberId = loggedInMember._id;
+  console.log(`Member ${memberId} logged in:`, loggedInMember);
+  wixLocationFrontend.to("/home");
+});
+const isLoggedIn = authentication.loggedIn();
+
+if (isLoggedIn) {
+  console.log('Member is logged in');
+  //  wixLocationFrontend.to("/home");
+} else {
+  console.log('Member is not logged in');
+}

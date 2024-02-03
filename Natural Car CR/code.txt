@@ -1,0 +1,114 @@
+import wixData from 'wix-data';
+
+$w.onReady(function () {
+    const countries = [
+        "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
+        "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia",
+        "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Côte d'Ivoire", "Cabo Verde",
+        "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Congo-Brazzaville)",
+        "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czechia (Czech Republic)", "Democratic Republic of the Congo", "Denmark", "Djibouti",
+        "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini (fmr. 'Swaziland')",
+        "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea",
+        "Guinea-Bissau", "Guyana", "Haiti", "Holy See", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland",
+        "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon",
+        "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta",
+        "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique",
+        "Myanmar (formerly Burma)", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea",
+        "North Macedonia (formerly Macedonia)", "Norway", "Oman", "Pakistan", "Palau", "Palestine State", "Panama", "Papua New Guinea", "Paraguay",
+        "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia",
+        "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles",
+        "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain",
+        "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga",
+        "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom",
+        "United States of America", "Uruguay", "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+    ];
+
+    $w("#country").options = countries.map(country => {
+        return { label: country, value: country };
+    });
+
+    let location = $w('#location').value;
+    let PickupDate = $w('#PickupDate').value;
+    let DropoffDate = $w('#DropoffDate').value;
+    let PickupTime = $w('#PickupTime').value;
+    let DropoffTime = $w('#DropoffTime').value;
+    let difflocationcheck = $w('#diffLocation').value;
+    let diffLocation = $w('#diffLocationValue').value;
+    let Age = $w('#age').value;
+    let Country = $w('#country').value;
+    let email = $w('#email').value;
+    let phoneNumber = $w('#phoneNumber').value;
+    let CouponCheck = $w('#CouponCheck').value;
+    let CouponCode = $w('#CouponCode').value;
+    let PDN = $w('#PDN').value;
+    let PerksCheck = $w('#PerksCheck').value;
+    let PerksId = $w('#PerksId').value;
+    let LastName = $w('#LastName').value;
+
+    $w("#diffLocation").onChange((event) => {
+        let isChecked = $w('#diffLocation').checked;
+        if (isChecked == true) {
+            $w("#diffLocationValue").expand();
+        } else {
+            $w("#diffLocationValue").collapse();
+        }
+    });
+
+    $w("#CouponCheck").onChange((event) => {
+        let isChecked = $w('#CouponCheck').checked;
+        if (isChecked == true) {
+            $w("#CouponCode").expand();
+            $w("#PDN").expand();
+        } else {
+            $w("#CouponCode").collapse();
+            $w("#PDN").collapse();
+        }
+    });
+
+    $w("#PerksCheck").onChange((event) => {
+        let isChecked = $w('#PerksCheck').checked;
+        if (isChecked == true) {
+            $w("#PerksId").expand();
+            $w("#LastName").expand();
+        } else {
+            $w("#PerksId").collapse();
+            $w("#LastName").collapse();
+        }
+    });
+    $w('#getRates').onClick(() => {
+        wixData.insert('Reservations', {
+                pickUpLocation: location,
+                pickUpDate: PickupDate,
+                dropOffDate: DropoffDate,
+                pickUpTime: PickupTime,
+                dropOffTime: DropoffTime,
+                diffLocationCheck: difflocationcheck,
+                diffLocation: diffLocation,
+                age: Age,
+                country: Country,
+                email: email,
+                phoneNumber: phoneNumber,
+                couponCheck: CouponCheck,
+                couponCode: CouponCode,
+                PDN: PDN,
+                perksCheck: PerksCheck,
+                perksId: PerksId,
+                lastName: LastName
+            })
+            .then(() => {
+                // Success message
+                console.log('Reservation data saved successfully!');
+                $w('#text13').show();
+                $w('#text13').hide();
+            })
+            .catch((error) => {
+                // Error handling
+                console.error(error);
+                $w('#text14').show();
+                $w('#text13').hide();
+
+            });
+
+    });
+
+});

@@ -1,0 +1,124 @@
+import { registerSiteMember, approveSiteMember } from 'backend/auth'
+import wixWindow from 'wix-window';
+import wixLocationFrontend from 'wix-location';
+
+
+$w.onReady(function () {
+    const inputElements = [$w("#fname"), $w("#lname"), $w("#email"), $w("#password"), $w("#hState"), $w("#address"), $w("#year"), $w("#agreement"), $w("#ckbJoinCommunity"), ];
+
+    $w("#btnSignup").onClick(() => {
+
+        registerNewMember();
+
+    });
+  
+
+    const registerNewMember = async () => {
+
+        // await $w("#errorMessage").hide();
+        await $w("#successMessage").hide();
+        await $w("#btnSignup").disable();
+
+        const isValid = await validate();
+        if (!isValid) return;
+
+        const fullName = $w("#fname").value;
+        const lastName = $w("#lname").value;
+        const email = $w("#email").value;
+        const password = $w("#password").value;
+        const homeState = $w("#hState").value;
+        const address = $w("#address").value;
+        const year = $w("#year").value;
+
+        let joinCommunity = "No";
+        if ($w("#ckbJoinCommunity").checked)
+            joinCommunity = "Yes";
+        let agreement = null;
+        if ($w("#agreement").checked)
+            agreement = "I agree to the terms & conditions";
+
+        let options = {
+            contactInfo: {
+                firstName: fullName,
+                latsName: lastName,
+                community: joinCommunity,
+                agreement: agreement,
+                homeState: homeState,
+                address: address,
+                year: year
+            },
+            privacyStatus: 'PUBLIC'
+        };
+
+        const data = await registerSiteMember(email, password, options);
+        if (data.status) {
+            $w("#successMessage").text = "Thanks for Submission";
+            await $w("#successMessage").show();
+
+            // await $w("#errorMessage").hide();
+            await $w("#btnSignup").enable();
+
+            wixLocationFrontend.to("/home");
+
+            inputElements.forEach(async (element) => {
+                element.value = null;
+                await element.resetValidityIndication();
+            });
+            $w("#agreement").checked = false;
+            await $w("#agreement").resetValidityIndication();
+            $w("#ckbJoinCommunity").checked = false;
+            await $w("#ckbJoinCommunity").resetValidityIndication();
+
+        }
+        //  else {
+        //     const error = data.result;
+        //     //     if (error.details.applicationError.code == -19995) {
+            //         $w("#errorMessage").text = "Member with this email already exists";
+            //         await $w("#errorMessage").show();
+            //         await $w("#btnSignup").enable();
+
+            //         
+            //         await $w("#btnSignup").disable();
+            //     } else {
+            //         $w("#errorMessage").text = "There was an error. Please try again later.";
+            //         await $w("#errorMessage").show();
+            //         await $w("#btnSignup").enable();
+                      //         await $w("#btnSignup").disable();
+            //     }
+            // }
+
+        // }
+
+        async function validate() {
+
+            //let valid;
+            let valid = true;
+            let errorMessage = "Please fill out all required fields";
+
+            inputElements.forEach(async (element) => {
+                valid = valid && element.valid;
+                if (!valid) {
+                    await element.updateValidityIndication();
+                    await element.scrollTo();
+                }
+            });
+
+            // if (!valid) {
+            //     await showErrorMessage(errorMessage);
+            // }
+
+            return valid;
+        }
+
+        // async function showErrorMessage(message) {
+        //     $w("#errorMessage").text = message || "There was an error. Please try again later";
+        //     await $w("#errorMessage").show();
+        //     await $w("#btnSignup").enable();
+        //     await $w("#loading").hide();
+
+        //     await $w("#myCaptcha").reset();
+        //     await $w("#btnSignup").disable();
+        // }
+
+    }
+});

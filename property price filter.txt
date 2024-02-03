@@ -1,0 +1,56 @@
+import wixData from 'wix-data';
+
+$w.onReady(function () {
+    const minPriceInput = $w('#minPriceInput');
+    const maxPriceInput = $w('#maxPriceInput');
+    const priceRangeInput = $w('#priceRangeInput');
+    const minPriceText = $w('#minPriceText');
+    const maxPriceText = $w('#maxPriceText');
+
+    priceRangeInput.onChange((event) => {
+        const newMaxValue = parseFloat(event.target.value);
+        const newMinValue = parseFloat(event.target.min);
+        updatePriceValues(newMinValue, newMaxValue);
+    });
+
+    minPriceInput.onChange(() => {
+        const newMinValue = parseFloat(minPriceInput.value);
+        const currentMaxValue = parseFloat(maxPriceInput.value);
+        updatePriceValues(newMinValue, currentMaxValue);
+    });
+
+    maxPriceInput.onChange(() => {
+        const currentMinValue = parseFloat(minPriceInput.value);
+        const newMaxValue = parseFloat(maxPriceInput.value);
+        updatePriceValues(currentMinValue, newMaxValue);
+    });
+
+    function updatePriceValues(newMinValue, newMaxValue) {
+        minPriceText.text = `$${newMinValue.toFixed(2)}`;
+        maxPriceText.text = `$${newMaxValue.toFixed(2)}`;
+        filterAndBindDataset(newMinValue, newMaxValue);
+    }
+
+    async function filterAndBindDataset(minValue, maxValue) {
+        const filter = wixData.filter()
+            .ge('price', minValue)
+            .le('price', maxValue);
+
+        $w('#propertiesDataset').setFilter(filter);
+
+        $w('#propertiesDataset').onReady(() => {
+            let count = $w('#propertiesDataset').getTotalCount();
+            console.log(count);
+
+            $w('#propertiesDataset').getItems(0, count)
+                .then((result) => {
+                    let items = result.items;
+                    console.log(items);
+                    $w('#propertiesRepeater').data = items;
+                })
+                .catch((error) => {
+                    console.error('Error fetching filtered data:', error);
+                });
+        });
+    }
+});
