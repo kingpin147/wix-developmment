@@ -1,0 +1,14 @@
+pay.jsw
+
+import wixPayBackend from 'wix-pay-backend';
+import wixData from 'wix-data';
+
+export async function createMyPayment(donation) {
+	return wixPayBackend.createPayment({
+		items: [{
+            name: donation.title,
+            price: donation.amount
+		}],
+		amount: donation.amount
+	});
+}

@@ -1,0 +1,28 @@
+// Velo API Reference: https://www.wix.com/velo/reference/api-overview/introduction
+
+$w.onReady(function () {
+
+    $w("#slider").min = 600000;
+    $w("#slider").max = 6000000;
+    $w("#slider").step = 50000;
+
+    let min = $w("#slider").min;
+    let max = $w("#slider").max;
+
+    $w("#slider").onChange(() => {
+        console.log(min);
+        console.log(max);
+        let slider = $w("#slider").value;
+        console.log(slider);
+        //flat fee table
+        $w('#ppflatfee').text = String((slider).toLocaleString());
+        $w('#payflatfee').text = String(((0.975 * slider) + 9999).toLocaleString());
+        $w('#cashbackflatfee').text = String(((0.025 * slider) - 9999).toLocaleString());
+        $w('#BACflatfee').text = String((9999).toLocaleString());
+        //traditional fee table
+        $w('#ppTA').text = String((slider).toLocaleString());
+        $w('#payTA').text = String((slider).toLocaleString());
+        $w('#cashbackTA').text = String((0).toLocaleString());
+        $w('#BACTA').text = String(((0.025 * slider)).toLocaleString());
+    })
+});

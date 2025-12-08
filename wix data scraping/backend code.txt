@@ -1,0 +1,93 @@
+import { fetch } from 'wix-fetch';
+
+export function getData() {
+    const url = "https://www.mortgagenewsdaily.com/mbs";
+
+    return fetch(url)
+        .then(response => response.text())
+        .then(html => {
+            // Patterns to match tables
+            const mbsTablePattern = /<table[^>]*id="mbs-rates"[^>]*>([\s\S]*?)<\/table>/;
+            const mortgageRatesTablePattern = /<table[^>]*class="table table-hover mtg-rates"[^>]*>([\s\S]*?)<\/table>/;
+
+            // Match tables
+            const mbsTableMatch = mbsTablePattern.exec(html);
+            const mortgageRatesTableMatch = mortgageRatesTablePattern.exec(html);
+
+            if (!mbsTableMatch) {
+                console.error("No MBS table found.");
+                return { mbs10Year: [], treasuries: [], firstMortgageRate: 'Not found' };
+            }
+
+            const mbsTableHtml = mbsTableMatch[1];
+            const mortgageRatesTableHtml = mortgageRatesTableMatch ? mortgageRatesTableMatch[1] : '';
+
+            // Extract rows from MBS table
+            const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
+            const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/g;
+
+            const rows = [...mbsTableHtml.matchAll(rowPattern)];
+
+            console.log(`Rows Found in MBS Table:`, rows.length);
+
+            // Extract MBS rows and convert price from ticks to basis points
+            const mbsRows = rows.slice(0, 5); // Get first 5 rows
+            let mbsRowsData = mbsRows.map(row => {
+                let rowHtml = row[1];
+                const cells = [...rowHtml.matchAll(cellPattern)];
+
+                if (cells.length >= 3) {
+                    const product = cells[0][1].replace(/<.*?>/g, '').trim().replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ');
+                    const price = cells[1][1].replace(/<.*?>/g, '').trim();
+                    const change = cells[2][1].replace(/<.*?>/g, '').trim();
+                    const extraColumn = cells[3] ? cells[3][1].replace(/<.*?>/g, '').trim() : ''; // Optional column
+
+                    // Convert price from ticks to basis points
+                    const priceInTicks = parseFloat(price.replace(/,/g, '')); // Remove commas if any
+                    const priceInBasisPoints = priceInTicks * 100;
+
+                    return {
+                        product,
+                        price: priceInBasisPoints.toFixed(2),
+                        change: parseFloat(change.replace(/^\+/, '')).toFixed(2), // Handle change
+                        extraColumn
+                    };
+                }
+                return null;
+            }).filter(item => item !== null);
+
+            // Extract the 4th row from the Treasuries section
+            const treasuryPattern = /<tr[^>]*data-product="10YEARTREAS"[^>]*>([\s\S]*?)<\/tr>/;
+            const treasuryMatch = treasuryPattern.exec(mbsTableHtml);
+
+            const treasuryData = treasuryMatch ? {
+                product: treasuryMatch[1].match(/<td class="rate-product">\s*<a[^>]*>([\s\S]*?)<\/a>/)[1].trim(),
+                rate: treasuryMatch[1].match(/<td class="rate">([\s\S]*?)<\/td>/)[1].trim(),
+                change: treasuryMatch[1].match(/<td class="change[^>]*">([\s\S]*?)<\/td>/)[1].trim()
+            } : "Not found";
+
+            // Extract the first row from the Mortgage Rates table
+            const firstMortgageRowPattern = /<tr>\s*<td class="rate-product">\s*<a[^>]*>([\s\S]*?)<\/a>\s*<\/td>\s*<td class="rate">([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>\s*<td class="text-center change[^>]*">[\s\S]*?<span>([\s\S]*?)<\/span>\s*<\/td>\s*<\/tr>/;
+            const firstMortgageRowMatch = firstMortgageRowPattern.exec(mortgageRatesTableHtml);
+
+            const firstMortgageData = firstMortgageRowMatch ? {
+                product: firstMortgageRowMatch[1].trim(),
+                rate: firstMortgageRowMatch[2].trim(),
+                points: firstMortgageRowMatch[3].trim(),
+                change: firstMortgageRowMatch[4].trim().replace(/^\+/, '') // Clean up change field
+            } : "Not found";
+
+            const formattedData = {
+                mbs10Year: mbsRowsData,
+                treasuries: [treasuryData],
+                firstMortgageRate: firstMortgageData
+            };
+
+            console.log("Formatted Data: ", formattedData);
+            return formattedData;
+        })
+        .catch(error => {
+            console.error("Error during fetch: ", error);
+            throw error;
+        });
+}

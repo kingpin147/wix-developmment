@@ -1,0 +1,30 @@
+//jobs.config
+
+{
+  "jobs": [
+    {
+      "functionLocation": "/updateFundraisers.jsw",
+      "functionName": "updateDate",
+      "description": "Update fundraisers older than 30 days to \"Past\" in status field",
+      "executionConfig": {
+        "time": "00:00"
+      }
+    },
+    {
+      "functionLocation": "/dhl.jsw",
+      "functionName": "sendGermanyFiles1",
+      "description": "Send PDF Label files for Germany Batch 1",
+      "executionConfig": {
+        "time": "01:00"
+      }
+    },
+    {
+      "functionLocation": "/dhl.jsw",
+      "functionName": "sendGermanyFiles2",
+      "description": "Send PDF Label files for Germany Batch 2",
+      "executionConfig": {
+        "time": "08:00"
+      }
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+// http-funtions.js
+
+import wixPaymentProviderBackend from 'wix-payment-provider-backend';
+import { ok, badRequest } from 'wix-http-functions';
+import wixSecretsBackend from 'wix-secrets-backend';
+
+// This endpoint is used to update the status of a checkout session transaction.
+export async function post_updateTransaction(request) {
+//   console.log(request.query['wixTransactionId'])
+const apiKey =  await wixSecretsBackend.getSecret('fipToken');
+
+    // const transactionRequestBody = await request.body.json()
+    const response = {
+        'headers': {
+            'Content-Type': 'application/json'
+        }
+    };
+
+    // If the payment was received by Tazapay update the transaction status on the site.
+
+    try {
+        //Checking if the request body includes the transaction ID. If not, it's retrieved from the query params.
+        let wixTransactionId,fipAuth,checkoutId;
+
+
+        fipAuth=request.query['fipToken']
+        wixTransactionId = request.query['wixTransactionId']
+        checkoutId = request.query['checkId']
+
+        if(fipAuth!==apiKey){
+            return;
+        }
+
+        // console.log('header match')
+    
+        await submitTransactionUpdate(wixTransactionId, checkoutId);
+        response.body = {};
+        return ok(response);
+    } catch (err) {
+        response.body = {
+            'error': err
+        };
+        return badRequest(response);
+    }
+}
+
+// This endpoint is used to update the status of a refund request.
+export async function post_updateRefund(request) {
+    console.log(request)
+
+    const apiKey = await wixSecretsBackend.getSecret('fipToken');
+    const response = {
+        'headers': {
+            'Content-Type': 'application/json'
+        }
+    };
+
+    try {
+        let wixTransactionId, fipAuth;
+
+        fipAuth = request.query['fipToken']
+
+        if (fipAuth !== apiKey) {
+            return;
+        }
+
+        wixTransactionId = request.query['wixTransactionId'];
+        const amount = request.query['amount'];
+        const wixRefundId = request.query['wixTransactionId'];
+        const pluginRefundId = request.query['checkId'];
+
+        await submitRefundUpdate(wixTransactionId, pluginRefundId, wixRefundId, amount)
+        response.body = {};
+        return ok(response);
+    } catch (err) {
+        response.body = {
+            'error': err
+        };
+        return badRequest(response);
+    }
+}
+
+// Use the submit event function to update a transaction's status.
+export async function submitTransactionUpdate(wixTransactionId, pluginTransactionId) {
+    try {
+        let response = await wixPaymentProviderBackend.submitEvent({
+            'event': {
+                'transaction': {
+                    'wixTransactionId': wixTransactionId,
+                    'pluginTransactionId': pluginTransactionId
+                }
+            }
+        });
+        return response;
+    } catch (error) {
+        console.log('Error updating the transaction status: ', error)
+        return error;
+    }
+}
+
+// Use the submit event function to update a refund's status.
+async function submitRefundUpdate(wixTransactionId, pluginRefundId, wixRefundId, amount) {
+    try {
+        let response = await wixPaymentProviderBackend.submitEvent({
+            'event': {
+                'refund': {
+                    'wixTransactionId': wixTransactionId,
+                    'pluginRefundId': pluginRefundId,
+                    'amount': amount,
+                    'wixRefundId': wixRefundId
+                }
+            }
+        });
+        return response;
+    } catch (error) {
+        console.log('Error updating refund status: ', error)
+        return error
+    }
+}

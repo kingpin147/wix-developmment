@@ -1,0 +1,401 @@
+import wixData from 'wix-data';
+import { triggeredEmails } from 'wix-crm';
+import { sendEmailToAdmin } from 'backend/senGrid.jsw';
+import { sendMail } from 'backend/sendGrid.jsw';
+
+let c = '#235533'; //default value '#235533'
+let b = '#235533';
+let v = '#235533';
+let FullName = null;
+let Email = null;
+let Phone = null;
+
+const color1 = '#235533';
+const color2 = '#1b4d2d';
+const color3 = '#375748';
+const color4 = '#614f43';
+const color5 = '#382728';
+const color6 = '#73292f';
+const color7 = '#bd9f6f';
+const color8 = '#4e131e';
+const color9 = '#1c1b57';
+const color10 = '#5b5d62';
+const color11 = '#002f54';
+const color12 = '#00517f';
+const color13 = '#8d9198';
+const color14 = '#49c7ed';
+const color15 = '#ffca6e';
+const color16 = '#e35e44';
+const color17 = '#c71823';
+const color18 = '#000000';
+
+function setCourtZoneBackgroundColor(color) {
+    $w('#courtZoneLeft1').style.backgroundColor = color;
+    $w('#courtZoneLeft2').style.backgroundColor = color;
+    $w('#courtZoneRight1').style.backgroundColor = color;
+    $w('#courtZoneRight2').style.backgroundColor = color;
+    // $w('#lightGreenC').style.borderColor = '#FFFF00';
+}
+
+function setCourtBorderColor(color1) {
+    $w('#border').style.backgroundColor = color1;
+    // $w('#lightGreenB').style.borderColor = '#FFFF00';
+}
+
+function setCourtVolleyColor(color2) {
+    $w('#nonVolley').style.backgroundColor = color2;
+    // $w('#lightGreenV').style.borderColor = '#FFFF00';
+}
+
+// function setBorderColorAndRemovePrevious(elementId, color) {
+
+//     if (currentBorderColor == '#FFFF00') {
+//         $w(elementId).style.borderColor = '#FAFAFA';
+//     }
+//     currentBorderColor = color;
+//     $w(elementId).style.borderColor = '#FFFF00';
+// }
+
+//court clicks
+
+$w('#lightGreenC').onClick(() => {
+    setCourtZoneBackgroundColor(color1);
+    c = "Light Green";
+});
+$w('#forestGreenC').onClick(() => {
+    setCourtZoneBackgroundColor(color2);
+    c = "Forest Green";
+});
+$w('#darkGreenC').onClick(() => {
+    setCourtZoneBackgroundColor(color3);
+    c = "Dark Green";
+});
+$w('#beigeC').onClick(() => {
+    setCourtZoneBackgroundColor(color4);
+    c = "Beige";
+});
+$w('#brownC').onClick(() => {
+    setCourtZoneBackgroundColor(color5);
+    c = "Brown";
+});
+$w('#redC').onClick(() => {
+    setCourtZoneBackgroundColor(color6);
+    c = "Red";
+});
+$w('#sandStoneC').onClick(() => {
+    setCourtZoneBackgroundColor(color7);
+    c = "Sand Stone";
+});
+$w('#maroonC').onClick(() => {
+    setCourtZoneBackgroundColor(color8);
+    c = "Maroon";
+});
+$w('#tornamentPurpleC').onClick(() => {
+    setCourtZoneBackgroundColor(color9);
+    c = "Tournament Purple";
+});
+$w('#grayC').onClick(() => {
+    setCourtZoneBackgroundColor(color10);
+    c = "Gray";
+});
+$w('#blueC').onClick(() => {
+    setCourtZoneBackgroundColor(color11);
+    c = "Blue";
+});
+$w('#lightBlueC').onClick(() => {
+    setCourtZoneBackgroundColor(color12);
+    c = "Light Blue";
+});
+$w('#doveGrayC').onClick(() => {
+    setCourtZoneBackgroundColor(color13);
+    c = "Dove Gray";
+});
+$w('#iceBlueC').onClick(() => {
+    setCourtZoneBackgroundColor(color14);
+    c = "Ice Blue";
+});
+$w('#yellowC').onClick(() => {
+    setCourtZoneBackgroundColor(color15);
+    c = "Yellow";
+});
+$w('#orangeC').onClick(() => {
+    setCourtZoneBackgroundColor(color16);
+    c = "Orange";
+});
+$w('#brightRedC').onClick(() => {
+    setCourtZoneBackgroundColor(color17);
+    c = "Bright Red";
+});
+$w('#blackC').onClick(() => {
+    setCourtZoneBackgroundColor(color18);
+    c = "Black";
+});
+
+//boorder clicks
+
+$w('#lightGreenB').onClick(() => {
+    setCourtBorderColor(color1);
+    b = "Light Green";
+});
+
+$w('#forestGreenB').onClick(() => {
+    setCourtBorderColor(color2);
+    b = "Forest Green";
+});
+
+$w('#darkGreenB').onClick(() => {
+    setCourtBorderColor(color3);
+    b = "Dark Green";
+});
+
+$w('#beigeB').onClick(() => {
+    setCourtBorderColor(color4);
+    b = "Beige";
+});
+
+$w('#brownB').onClick(() => {
+    setCourtBorderColor(color5);
+    b = "Brown";
+});
+
+$w('#redB').onClick(() => {
+    setCourtBorderColor(color6);
+    b = "Red";
+});
+
+$w('#sandStoneB').onClick(() => {
+    setCourtBorderColor(color7);
+    b = "Sand Stone";
+});
+
+$w('#maroonB').onClick(() => {
+    setCourtBorderColor(color8);
+    b = "Maroon";
+});
+
+$w('#tornamentPurpleB').onClick(() => {
+    setCourtBorderColor(color9);
+    b = "Tournament Purple";
+});
+
+$w('#grayB').onClick(() => {
+    setCourtBorderColor(color10);
+    b = "Gray";
+});
+
+$w('#blueB').onClick(() => {
+    setCourtBorderColor(color11);
+    b = "Blue";
+});
+
+$w('#lightBlueB').onClick(() => {
+    setCourtBorderColor(color12);
+    b = "Light Blue";
+});
+
+$w('#doveGrayB').onClick(() => {
+    setCourtBorderColor(color13);
+    b = "Dove Gray";
+});
+
+$w('#iceBlueB').onClick(() => {
+    setCourtBorderColor(color14);
+    b = "Ice Blue";
+});
+
+$w('#yellowB').onClick(() => {
+    setCourtBorderColor(color15);
+    b = "Yellow";
+});
+
+$w('#orangeB').onClick(() => {
+    setCourtBorderColor(color16);
+    b = "Orange";
+});
+
+$w('#brightRedB').onClick(() => {
+    setCourtBorderColor(color17);
+    b = "Bright Red";
+});
+
+$w('#blackB').onClick(() => {
+    setCourtBorderColor(color18);
+    b = "Black";
+});
+
+// Volley clicks
+
+$w('#lightGreenV').onClick(() => {
+    setCourtVolleyColor(color1);
+    v = "Light Green";
+});
+$w('#forestGreenV').onClick(() => {
+    setCourtVolleyColor(color2);
+    v = "Forest Green";
+});
+$w('#darkGreenV').onClick(() => {
+    setCourtVolleyColor(color3);
+    v = "Dark Green";
+});
+$w('#beigeV').onClick(() => {
+    setCourtVolleyColor(color4);
+    v = "Beige";
+});
+$w('#brownV').onClick(() => {
+    setCourtVolleyColor(color5);
+    v = "Brown";
+});
+$w('#redV').onClick(() => {
+    setCourtVolleyColor(color6);
+    v = "Red";
+});
+$w('#sandStoneV').onClick(() => {
+    setCourtVolleyColor(color7);
+    v = "Sand Stone";
+});
+$w('#maroonV').onClick(() => {
+    setCourtVolleyColor(color8);
+    v = "Maroon";
+});
+$w('#tornamentPurpleV').onClick(() => {
+    setCourtVolleyColor(color9);
+    v = "Tournament Purple";
+});
+$w('#grayV').onClick(() => {
+    setCourtVolleyColor(color10);
+    v = "Gray";
+});
+$w('#blueV').onClick(() => {
+    setCourtVolleyColor(color11);
+    v = "Blue";
+});
+$w('#lightBlueV').onClick(() => {
+    setCourtVolleyColor(color12);
+    v = "Light Blue";
+});
+$w('#doveGrayV').onClick(() => {
+    setCourtVolleyColor(color13);
+    v = "Dove Gray";
+});
+$w('#iceBlueV').onClick(() => {
+    setCourtVolleyColor(color14);
+    v = "Ice Blue";
+});
+$w('#yellowV').onClick(() => {
+    setCourtVolleyColor(color15);
+    v = "Yellow";
+});
+$w('#orangeV').onClick(() => {
+    setCourtVolleyColor(color16);
+    v = "Orange";
+});
+$w('#brightRedV').onClick(() => {
+    setCourtVolleyColor(color17);
+    v = "Bright Red";
+});
+$w('#blackV').onClick(() => {
+    setCourtVolleyColor(color18);
+    v = "Black";
+});
+
+function submitHandler() {
+
+    let contactID = '87b6c1f9-23d5-48eb-9cba-b9da2fb2ca21';
+    triggeredEmails.emailContact('U4k4K6y', contactID);
+    // triggeredEmails.emailContact('U4ZPvTh', contactID, {
+    //         variables: {
+    //             Name: FullName,
+    //             CourtColor: c,
+    //             BorderColor: b,
+    //             Email: Email,
+    //             NonVolleyColor: v
+    //         }
+    //     })
+    //     .then((response) => {
+    //         console.log("Email sent successfully");
+    //         console.log(response);
+    //     })
+    //     .catch((emailError) => {
+    //         console.error("Error sending email");
+    //         console.error(emailError);
+
+    //         return;
+    //     });
+
+    let toInsert = {
+        "fullName": FullName,
+        "email": Email,
+        "phone": Phone,
+        "courtColor": c,
+        "borderColor": b,
+        "nonvolleyColor": v,
+    };
+
+    wixData.insert("CourtDesignData", toInsert)
+        .then((item) => {
+            console.log("success message");
+            console.log(item);
+            $w('#success').show();
+
+        })
+        .catch((err) => {
+            console.log(err);
+            $w('#error').show();
+        });
+}
+
+$w('#submit').onClick(async () => {
+    // submitHandler();
+    FullName = $w('#name').value;
+    Email = $w('#email').value;
+    Phone = $w('#phone').value;
+    const text = "test";
+    const emailResult = await sendMail(FullName, text);
+    if (emailResult[0].statusCode === 202) {
+        console.log("success sending email")
+    } else {
+        console.log("error sending email")
+    }
+
+});
+
+
+
+
+
+
+
+
+
+import wixSecretsBackend from 'wix-secrets-backend';
+const sgMail = require('@sendgrid/mail')
+export async function sendMail(name, message) 
+    {const apiKey = await wixSecretsBackend.getSecret("SendGrid");
+    let key = apiKey;
+    sgMail.setApiKey(key);
+    const msg = {
+        "personalizations": [{
+            "to": [{
+                "email": 'lawrence@pickledcourt.com',
+            }],
+            "dynamic_template_data": {
+                "name": name,
+                "message": message,
+            }
+        }],
+        "from": {
+            "email": "lawrence@pickledcourt.com",
+            "name": "Lawrence"
+        },
+        "reply_to": {
+            "email": "lawrence@pickledcourt.com",
+            "name": "Lawrence"
+        },
+        "template_id": "d-223049dff87140268adfe617d6561b92"
+    };
+
+    try {
+        return await sgMail.send(msg);
+    } catch (error) {
+        return [{ statusCode: error.code, message: error.message }];
+    }

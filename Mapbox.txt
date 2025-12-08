@@ -1,0 +1,46 @@
+<div class="closeby-embed-fb7618c274daf4c7273848f38008c820"></div>
+<script src="https://embed.closeby.co/v1.js?closeby.mapKey=fb7618c274daf4c7273848f38008c820&embed=true&height=700" async defer></script>
+
+
+
+/// mapbox
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Display a map on a webpage</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+<style>
+body { margin: 0; padding: 0; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+.mapboxgl-popup-content { 
+    font-family: Arial, sans-serif;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoiZnJhbmtkaW1pdHJpIiwiYSI6ImNsZ25udHpzazA5c3Ezc3BqYWRvY3pwdTIifQ.hYxDNOe-gRNb-rDjImyusQ';
+    const map = new mapboxgl.Map({
+        container: 'map', // container ID
+      	style: 'mapbox://styles/mapbox/outdoors-v12', // corrected map style URL
+        center: [35.00000000, 39.00000000], // starting position [lng, lat]
+        zoom: 4.5 // starting zoom
+    });
+const marker1 = new mapboxgl.Marker().setLngLat([30.6603261, 36.8790125]).setPopup(new mapboxgl.Popup().setHTML("<h1 style='color: #333; font-size: 18px; margin-bottom: 5px;'>Antalya Aquarium, ANTALYA</h1>")).addTo(map); // corrected coordinates and added popup
+const marker2 = new mapboxgl.Marker().setLngLat([29.0180458, 41.0664709 ]).setPopup(new mapboxgl.Popup().setHTML("<h1 style='color: #333; font-size: 18px; margin-bottom: 5px;'>Zorlu Center DC, İSTANBUL</h1>")).addTo(map); // corrected coordinates and added popup
+const marker3 = new mapboxgl.Marker().setLngLat([ 28.6773, 41.027]).setPopup(new mapboxgl.Popup().setHTML("<h1 style='color: #333; font-size: 18px; margin-bottom: 5px;'>Lukoil Esenyurt, İSTANBUL</h1>")).addTo(map); // corrected coordinates and added popup
+map.addControl(new mapboxgl.FullscreenControl()); // Add Fullscreen Control
+
+</script>
+
+</body>
+</html>

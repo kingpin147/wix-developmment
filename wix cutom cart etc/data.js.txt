@@ -1,0 +1,44 @@
+//data.js
+
+
+import { contacts } from 'wix-crm-backend';
+
+
+export async function EmailforLabel_beforeInsert(item, context) {
+	if(item.email != undefined){
+		const contact = await appendOrCreateContactFunction(item.email)
+		console.log('contact: ', contact)
+		if(contact != undefined){
+			item.contactId = contact.contactId
+		}
+	}
+	return item
+}
+
+export async function EmailforLabel_beforeUpdate(item, context) {
+	if(item.email != undefined){
+		const contact = await appendOrCreateContactFunction(item.email)
+		console.log('contact: ', contact)
+		if(contact != undefined){
+			item.contactId = contact.contactId
+		}
+	}
+	return item
+}
+
+export async function appendOrCreateContactFunction(email){
+  const contactInfo = {
+	emails: [
+		{
+			email: email
+		}
+	]
+  };
+  return await contacts.appendOrCreateContact(contactInfo)
+    .then((resolvedContact) => {
+      return resolvedContact;
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}

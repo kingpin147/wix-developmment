@@ -1,0 +1,78 @@
+//  payLink.jsw
+
+import { fetch } from 'wix-fetch';
+import wixSecretsBackend from 'wix-secrets-backend';
+
+
+export async function createPayLink(amount, ip,orderNumber,email,name,addressLine,city,state,zip,country,phone) {
+
+
+    const apiKey =  await wixSecretsBackend.getSecret('checkoutApiKey');
+
+    try {
+        // const apiKey = ''
+        const url = 'https://api.checkout.com/hosted-payments';
+
+        const headers = {
+            'Authorization': `Bearer ${apiKey}`,
+            // 'Authorization': 'Bearer sk_sbox_4b5ncxqdzb3rgn6knjljsm7o4io',
+            'Content-Type': 'application/json',
+        };
+
+        const requestBody = {
+    "amount": amount* 100,
+    "currency": "EUR",
+    // "payment_type": "Regular",
+    // "payment_ip": ip,
+    "reference": `Wix Order Number: ${orderNumber}`,
+    "description": `Payment for Wix Order ${orderNumber}`,
+    "processing_channel_id": "pc_t2qqhw2e6cruvlmnumsjw6zdc4",
+    "customer": {
+      "email": email,
+      "name": name
+    },
+    "billing": {
+      "address": {
+        "address_line1": addressLine,
+        "address_line2": "",
+        "city": city,
+        "state": state?state:"",
+        "zip": zip,
+        "country": country
+      },
+      "phone": {
+        "country_code": "+1",
+        "number": phone
+      }
+    },
+    "products": [
+      {
+        "name": `Wix Oder: ${orderNumber}`,
+        "quantity": 1,
+        "price": amount*100
+      }
+    ],
+    "success_url": "https://www.curefip.com/successs",
+    "cancel_url": "https://www.curefip.com/fail",
+    "failure_url": "https://www.curefip.com/fail"
+  }
+
+        const requestOptions = {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(requestBody)
+        };
+
+        const response = await fetch(url, requestOptions);
+        // console.log(response);
+        const res = response.json()
+        return res;
+    } catch (error) {
+        console.log(error)
+
+    }
+
+}
+
+
+

@@ -1,0 +1,550 @@
+import wixData from 'wix-data';
+import wixLocation from 'wix-location';
+let a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q;
+let professions = {};
+
+$w.onReady(function () {
+
+    let Elektronikerin = 0,
+        StudiumElektrotechnik = 0,
+        StudiumBWLIndustrie = 0,
+        StudiumBauingnieurwesen = 0,
+        FachkraftimFahrbetrieb = 0,
+        Feinwerkmechanikerin = 0,
+        EisenbahnerinimBetriebsdienst = 0,
+        Zugverkehrssteuerung = 0,
+        Industriekaufmannfrau = 0,
+        KfzMechatronikerin = 0;
+
+    //quiz question populating in repeater through cms database
+    wixData.query("quiz")
+        .find()
+        .then((results) => {
+            if (results && results.items && results.items.length > 0) {
+                const data = results.items[0];
+                $w('#q1').text = data.q1;
+                $w('#q2').text = data.q2;
+                $w('#q3').text = data.q3;
+                $w('#q4').text = data.q4;
+                $w('#q5').text = data.q5;
+                $w('#q6').text = data.q6;
+                $w('#q7').text = data.q7;
+                $w('#q8').text = data.q8;
+                $w('#q9').text = data.q9;
+                $w('#q10').text = data.q10;
+                $w('#q11').text = data.q11;
+                $w('#q12').text = data.q12;
+                $w('#q13').text = data.q13;
+                $w('#q14').text = data.q14;
+                $w('#q15').text = data.q15;
+                $w('#q16').text = data.q16;
+                $w('#q17').text = data.q17;
+            }
+        });
+
+    //start button
+    $w('#start').onClick(() => {
+        $w('#matchBox').changeState('tab1');
+    });
+
+    //q1
+    $w('#q1yes').onClick(() => {
+        $w('#matchBox').changeState('tab2');
+        a = "yes";
+        Elektronikerin += 10, StudiumElektrotechnik += 10, KfzMechatronikerin += 10;
+        $w('#progressBar2').value = 6;
+
+    });
+    $w('#backButton').onClick(() => {
+        $w('#matchBox').changeState('tab0');
+    });
+    $w('#q1no').onClick(() => {
+        $w('#matchBox').changeState('tab2');
+        a = "no";
+        $w('#progressBar2').value = 6;
+    });
+
+    //q2
+    $w('#q2yes').onClick(() => {
+        $w('#matchBox').changeState('tab3');
+        FachkraftimFahrbetrieb += 10, EisenbahnerinimBetriebsdienst += 10;
+        b = "Yes";
+        $w('#progressBar2').value = 12;
+    });
+    $w('#backButton2').onClick(() => {
+        Elektronikerin -= 10, StudiumElektrotechnik -= 10, KfzMechatronikerin -= 10;
+        $w('#matchBox').changeState('tab1');
+    });
+    $w('#q2no').onClick(() => {
+        $w('#matchBox').changeState('tab3');
+        b = "no";
+        $w('#progressBar2').value = 12;
+    });
+
+    //q3
+    $w('#q3yes').onClick(() => {
+        $w('#matchBox').changeState('tab4');
+        Elektronikerin += 10, Feinwerkmechanikerin += 10;
+        c = "Yes";
+        $w('#progressBar2').value = 18;
+    });
+    $w('#backButton3').onClick(() => {
+        FachkraftimFahrbetrieb -= 10, EisenbahnerinimBetriebsdienst -= 10;
+        $w('#matchBox').changeState('tab2');
+    });
+    $w('#q3no').onClick(() => {
+        $w('#matchBox').changeState('tab4');
+        c = "no";
+        $w('#progressBar2').value = 18;
+    });
+
+    //q4
+    $w('#q4yes').onClick(() => {
+        $w('#matchBox').changeState('tab5');
+        StudiumElektrotechnik += 10, StudiumBWLIndustrie += 10, StudiumBauingnieurwesen += 10;
+        d = "Yes";
+        $w('#progressBar2').value = 24;
+    });
+    $w('#backButton4').onClick(() => {
+        Elektronikerin -= 10, Feinwerkmechanikerin -= 10;
+        $w('#matchBox').changeState('tab3');
+    });
+    $w('#q4no').onClick(() => {
+        $w('#matchBox').changeState('tab5');
+        d = "no";
+        $w('#progressBar2').value = 24;
+    });
+
+    //q5
+    $w('#q5yes').onClick(() => {
+        $w('#matchBox').changeState('tab6');
+        FachkraftimFahrbetrieb += 10, EisenbahnerinimBetriebsdienst += 10;
+        e = "Yes";
+        $w('#progressBar2').value = 30;
+    });
+    $w('#backButton5').onClick(() => {
+        StudiumElektrotechnik -= 10, StudiumBWLIndustrie -= 10, StudiumBauingnieurwesen -= 10;
+        $w('#matchBox').changeState('tab4');
+    });
+    $w('#q5no').onClick(() => {
+        $w('#matchBox').changeState('tab6');
+        e = "no";
+        $w('#progressBar2').value = 30;
+    });
+
+    //q6
+    $w('#q6yes').onClick(() => {
+        $w('#matchBox').changeState('tab7');
+        Elektronikerin += 10, Feinwerkmechanikerin += 10, Industriekaufmannfrau += 10;
+        f = "Yes";
+        $w('#progressBar2').value = 36;
+
+    });
+    $w('#backButton6').onClick(() => {
+        FachkraftimFahrbetrieb -= 10, EisenbahnerinimBetriebsdienst -= 10;
+        $w('#matchBox').changeState('tab5');
+    });
+    $w('#q6no').onClick(() => {
+        $w('#matchBox').changeState('tab7');
+        f = "no"
+        $w('#progressBar2').value = 36;
+
+    });
+
+    //q7
+    $w('#q7yes').onClick(() => {
+        $w('#matchBox').changeState('tab8');
+        g = "Yes"
+        FachkraftimFahrbetrieb += 10, EisenbahnerinimBetriebsdienst += 10, Zugverkehrssteuerung += 10, Industriekaufmannfrau += 10;
+        $w('#progressBar2').value = 42;
+    });
+    $w('#backButton7').onClick(() => {
+        Elektronikerin -= 10, Feinwerkmechanikerin -= 10, Industriekaufmannfrau -= 10;
+        $w('#matchBox').changeState('tab6');
+    });
+    $w('#q7no').onClick(() => {
+        $w('#matchBox').changeState('tab8');
+        g = "no"
+        $w('#progressBar2').value = 42;
+    });
+
+    //q8
+    $w('#q8yes').onClick(() => {
+        $w('#matchBox').changeState('tab9');
+        FachkraftimFahrbetrieb += 10, EisenbahnerinimBetriebsdienst += 10, Zugverkehrssteuerung += 10;
+        h = "Yes";
+        $w('#progressBar2').value = 48;
+
+    });
+    $w('#backButton8').onClick(() => {
+        FachkraftimFahrbetrieb -= 10, EisenbahnerinimBetriebsdienst -= 10, Zugverkehrssteuerung -= 10, Industriekaufmannfrau -= 10;
+        $w('#matchBox').changeState('tab7');
+    });
+    $w('#q8no').onClick(() => {
+        $w('#matchBox').changeState('tab9');
+        h = "no";
+        $w('#progressBar2').value = 48;
+
+    });
+
+    //q9
+    $w('#q9yes').onClick(() => {
+        $w('#matchBox').changeState('tab10');
+        StudiumElektrotechnik += 10, StudiumBWLIndustrie += 10, StudiumBauingnieurwesen += 10, Industriekaufmannfrau += 10;
+        i = "Yes";
+        $w('#progressBar2').value = 54;
+    });
+    $w('#backButton9').onClick(() => {
+        FachkraftimFahrbetrieb -= 10, EisenbahnerinimBetriebsdienst -= 10, Zugverkehrssteuerung -= 10;
+        $w('#matchBox').changeState('tab8');
+    });
+    $w('#q9no').onClick(() => {
+        $w('#matchBox').changeState('tab10');
+        i = "no";
+        $w('#progressBar2').value = 54;
+
+    });
+
+    //q10
+    $w('#q10yes').onClick(() => {
+        $w('#matchBox').changeState('tab11');
+        StudiumElektrotechnik += 10, StudiumBWLIndustrie += 10, StudiumBauingnieurwesen += 10, EisenbahnerinimBetriebsdienst += 10, Industriekaufmannfrau += 10;
+        j = "Yes";
+        $w('#progressBar2').value = 60;
+    });
+    $w('#backButton10').onClick(() => {
+        StudiumElektrotechnik -= 10, StudiumBWLIndustrie -= 10, StudiumBauingnieurwesen -= 10, Industriekaufmannfrau -= 10;
+        $w('#matchBox').changeState('tab9');
+    });
+    $w('#q10no').onClick(() => {
+        $w('#matchBox').changeState('tab11');
+        j = "no";
+        $w('#progressBar2').value = 60;
+    });
+
+    //q11
+    $w('#q11yes').onClick(() => {
+        $w('#matchBox').changeState('tab12');
+        Elektronikerin += 10, KfzMechatronikerin += 10;
+        k = "Yes";
+        $w('#progressBar2').value = 66;
+    });
+    $w('#backButton11').onClick(() => {
+        StudiumElektrotechnik -= 10, StudiumBWLIndustrie -= 10, StudiumBauingnieurwesen -= 10, EisenbahnerinimBetriebsdienst -= 10, Industriekaufmannfrau -= 10;
+
+        $w('#matchBox').changeState('tab10');
+    });
+    $w('#q11no').onClick(() => {
+        $w('#matchBox').changeState('tab12');
+        k = "no";
+        $w('#progressBar2').value = 66;
+    });
+
+    //q12
+    $w('#q12yes').onClick(() => {
+        $w('#matchBox').changeState('tab13');
+        l = "Yes";
+        Feinwerkmechanikerin += 10, KfzMechatronikerin += 10;
+        $w('#progressBar2').value = 72;
+    });
+    $w('#backButton12').onClick(() => {
+        Elektronikerin -= 10, KfzMechatronikerin -= 10;
+        $w('#matchBox').changeState('tab11');
+    });
+    $w('#q12no').onClick(() => {
+        $w('#matchBox').changeState('tab13');
+        l = "no";
+        $w('#progressBar2').value = 72;
+    });
+
+    //q13
+    $w('#q13yes').onClick(() => {
+        $w('#matchBox').changeState('tab14');
+        m = "Yes";
+        KfzMechatronikerin += 10;
+        $w('#progressBar2').value = 78;
+    });
+    $w('#backButton13').onClick(() => {
+        Feinwerkmechanikerin -= 10, KfzMechatronikerin -= 10;
+        $w('#matchBox').changeState('tab12');
+    });
+    $w('#q13no').onClick(() => {
+        $w('#matchBox').changeState('tab14');
+        m = "no";
+        $w('#progressBar2').value = 78;
+    });
+
+    //q14
+    $w('#q14yes').onClick(() => {
+        $w('#matchBox').changeState('tab15');
+        n = "Yes";
+        Elektronikerin += 10;
+        $w('#progressBar2').value = 84;
+    });
+    $w('#backButton14').onClick(() => {
+        KfzMechatronikerin -= 10;
+        $w('#matchBox').changeState('tab13');
+    });
+    $w('#q14no').onClick(() => {
+        $w('#matchBox').changeState('tab15');
+        n = "no";
+        $w('#progressBar2').value = 84;
+    });
+
+    //q15
+    $w('#q15yes').onClick(() => {
+        $w('#matchBox').changeState('tab16');
+        o = "Yes";
+        FachkraftimFahrbetrieb += 10, EisenbahnerinimBetriebsdienst += 10, Industriekaufmannfrau += 10;
+        $w('#progressBar2').value = 90;
+    });
+    $w('#backButton15').onClick(() => {
+        Elektronikerin -= 10;
+        $w('#matchBox').changeState('tab14');
+    });
+    $w('#q15no').onClick(() => {
+        $w('#matchBox').changeState('tab16');
+        o = "no";
+        $w('#progressBar2').value = 90;
+    });
+
+    //q16
+    $w('#q16yes').onClick(() => {
+        $w('#matchBox').changeState('tab17');
+        p = "Yes";
+        Zugverkehrssteuerung += 10;
+        $w('#progressBar2').value = 96;
+    });
+    $w('#backButton16').onClick(() => {
+        FachkraftimFahrbetrieb -= 10, EisenbahnerinimBetriebsdienst -= 10, Industriekaufmannfrau -= 10;
+        $w('#matchBox').changeState('tab15');
+    });
+    $w('#q16no').onClick(() => {
+        $w('#matchBox').changeState('tab17');
+        p = "no";
+        $w('#progressBar2').value = 96;
+    });
+
+    //q17 plus final screen
+    $w('#q17yes').onClick(() => {
+        q = "Yes";
+        StudiumBauingnieurwesen += 10;
+        $w('#progressBar2').value = 100;
+        let toInsert = {
+            "q1": a,
+            "q2": b,
+            "q3": c,
+            "q4": d,
+            "q5": e,
+            "q6": f,
+            "q7": g,
+            "q8": h,
+            "q9": i,
+            "q10": j,
+            "q11": k,
+            "q12": l,
+            "q13": m,
+            "q14": n,
+            "q15": o,
+            "q16": p,
+            "q17": q,
+
+        };
+
+        wixData.insert("Results", toInsert)
+            .then((item) => {
+                console.log(item); //see item below
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+
+        let variableNames = [
+            "Elektroniker*in",
+            "Studium Elektrotechnik",
+            "Studium BWL Industrie",
+            "Studium Bauingnieurwesen",
+            "Fachkraft im Fahrbetrieb",
+            "Feinwerkmechaniker*in",
+            "Eisenbahner*in im Betriebsdienst – Lokführer und Transport",
+            "Eisenbahner*in im Betriebsdienst – Zugverkehrssteuerung",
+            "Industriekaufmann*frau",
+            "Kfz-Mechatroniker/in"
+        ];
+
+        //assigning numbers to professions
+        professions = {
+            "Elektroniker*in": Elektronikerin,
+            "Studium Elektrotechnik": StudiumElektrotechnik,
+            "Studium BWL Industrie": StudiumBWLIndustrie,
+            "Studium Bauingnieurwesen": StudiumBauingnieurwesen,
+            "Fachkraft im Fahrbetrieb": FachkraftimFahrbetrieb,
+            "Feinwerkmechaniker*in": Feinwerkmechanikerin,
+            "Eisenbahner*in im Betriebsdienst – Lokführer und Transport": EisenbahnerinimBetriebsdienst,
+            "Eisenbahner*in im Betriebsdienst – Zugverkehrssteuerung": Zugverkehrssteuerung,
+            "Industriekaufmann*frau": Industriekaufmannfrau,
+            "Kfz-Mechatroniker/in": KfzMechatronikerin
+        };
+        let mappedProfessions = variableNames.map((value) => professions[value]);
+
+        console.log(mappedProfessions);
+
+        //assigning links
+        let links = {
+            "url1": 'https://www.stelle-deines-lebens.de/ausbildung-elektroniker-uebersicht',
+            "url2": 'https://www.stelle-deines-lebens.de/duales-studium-elektrotechnik',
+            "url3": 'https://www.stelle-deines-lebens.de/duales-studium-bwl-industrie',
+            "url4": 'https://www.stelle-deines-lebens.de/duales-studium-bauingenieurwesen',
+            "url5": 'https://www.stelle-deines-lebens.de/ausbildung-fachkraft-im-fahrbetrieb',
+            "url6": 'https://www.stelle-deines-lebens.de/ausbildung-feinwerkmechaniker',
+            "url7": 'https://www.stelle-deines-lebens.de/eisenbahner-im-betriebsdienst-lokfuehrer-transport',
+            "url8": 'https://www.stelle-deines-lebens.de/ausbildung-eisenbahner-im-betriebsdienst-zugverkehrssteuerung',
+            "url9": 'https://www.stelle-deines-lebens.de/ausbildung-industriekaufmann',
+            "url10": 'https://www.stelle-deines-lebens.de/ausbildung-kfz-mechatroniker'
+        };
+
+        let dataset = [];
+        let len = variableNames.length;
+        //creating object of data to assign repeater
+        for (let i = 0; i < len; i++) {
+            dataset.push({ kind: i, name: variableNames[i], marks: mappedProfessions[i], links: links['url' + (i + 1)] });
+        }
+        console.log(dataset);
+        dataset.sort((a, b) => {
+            // Assuming 'marks' is a number; if it's a string, you may need to parse it to a number
+            return b.marks - a.marks;
+        });
+        const data = dataset.map((val) => ({ ...val, _id: val.kind.toString() }));
+        $w("#results").data = data;
+
+        $w('#results').onItemReady(($item, itemData, index) => {
+            $item('#proName').text = itemData.name;
+            if (itemData.marks != 0) {
+                $item('#marks').text = itemData.marks ? itemData.marks.toString() : '';
+                console.log(itemData.marks);
+            }
+            // $w("#goButton"). link = "https://different-link.com";
+            $item('#linkText').onClick(() => {
+                console.log(itemData.links);
+                let newlink = itemData.links;
+                setTimeout(() => {
+                    wixLocation.to(newlink);
+                }, 1000);
+            });
+        });
+
+        $w('#matchBox').changeState('ThankYou');
+    });
+    $w('#backButton17').onClick(() => {
+        Zugverkehrssteuerung -= 10;
+        $w('#matchBox').changeState('tab15');
+    });
+    $w('#q17no').onClick(() => {
+        q = "no";
+        StudiumBauingnieurwesen += 10;
+        $w('#progressBar2').value = 100;
+        let toInsert = {
+            "q1": a,
+            "q2": b,
+            "q3": c,
+            "q4": d,
+            "q5": e,
+            "q6": f,
+            "q7": g,
+            "q8": h,
+            "q9": i,
+            "q10": j,
+            "q11": k,
+            "q12": l,
+            "q13": m,
+            "q14": n,
+            "q15": o,
+            "q16": p,
+            "q17": q,
+
+        };
+
+        wixData.insert("Results", toInsert)
+            .then((item) => {
+                console.log(item); //see item below
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+
+        let variableNames = [
+            "Elektroniker*in",
+            "Studium Elektrotechnik",
+            "Studium BWL Industrie",
+            "Studium Bauingnieurwesen",
+            "Fachkraft im Fahrbetrieb",
+            "Feinwerkmechaniker*in",
+            "Eisenbahner*in im Betriebsdienst – Lokführer und Transport",
+            "Eisenbahner*in im Betriebsdienst – Zugverkehrssteuerung",
+            "Industriekaufmann*frau",
+            "Kfz-Mechatroniker/in"
+        ];
+
+        professions = {
+            "Elektroniker*in": Elektronikerin,
+            "Studium Elektrotechnik": StudiumElektrotechnik,
+            "Studium BWL Industrie": StudiumBWLIndustrie,
+            "Studium Bauingnieurwesen": StudiumBauingnieurwesen,
+            "Fachkraft im Fahrbetrieb": FachkraftimFahrbetrieb,
+            "Feinwerkmechaniker*in": Feinwerkmechanikerin,
+            "Eisenbahner*in im Betriebsdienst – Lokführer und Transport": EisenbahnerinimBetriebsdienst,
+            "Eisenbahner*in im Betriebsdienst – Zugverkehrssteuerung": Zugverkehrssteuerung,
+            "Industriekaufmann*frau": Industriekaufmannfrau,
+            "Kfz-Mechatroniker/in": KfzMechatronikerin
+        };
+        let mappedProfessions = variableNames.map((value) => professions[value]);
+
+        console.log(mappedProfessions);
+        let links = {
+            "url1": 'https://www.stelle-deines-lebens.de/ausbildung-elektroniker-uebersicht',
+            "url2": 'https://www.stelle-deines-lebens.de/duales-studium-elektrotechnik',
+            "url3": 'https://www.stelle-deines-lebens.de/duales-studium-bwl-industrie',
+            "url4": 'https://www.stelle-deines-lebens.de/duales-studium-bauingenieurwesen',
+            "url5": 'https://www.stelle-deines-lebens.de/ausbildung-fachkraft-im-fahrbetrieb',
+            "url6": 'https://www.stelle-deines-lebens.de/ausbildung-feinwerkmechaniker',
+            "url7": 'https://www.stelle-deines-lebens.de/eisenbahner-im-betriebsdienst-lokfuehrer-transport',
+            "url8": 'https://www.stelle-deines-lebens.de/ausbildung-eisenbahner-im-betriebsdienst-zugverkehrssteuerung',
+            "url9": 'https://www.stelle-deines-lebens.de/ausbildung-industriekaufmann',
+            "url10": 'https://www.stelle-deines-lebens.de/ausbildung-kfz-mechatroniker'
+        };
+
+        let dataset = [];
+        let len = variableNames.length;
+
+        for (let i = 0; i < len; i++) {
+            dataset.push({ kind: i, name: variableNames[i], marks: mappedProfessions[i], links: links['url' + (i + 1)] });
+        }
+        console.log(dataset);
+        dataset.sort((a, b) => {
+            // Assuming 'marks' is a number; if it's a string, you may need to parse it to a number
+            return b.marks - a.marks;
+        });
+        const data = dataset.map((val) => ({ ...val, _id: val.kind.toString() }));
+        $w("#results").data = data;
+
+        $w('#results').onItemReady(($item, itemData, index) => {
+            $item('#proName').text = itemData.name;
+            if (itemData.marks != 0) {
+                $item('#marks').text = itemData.marks ? itemData.marks.toString() : '';
+                console.log(itemData.marks);
+            }
+
+            // $w("#goButton"). link = "https://different-link.com";
+            $item('#linkText').onClick(() => {
+                console.log(itemData.links);
+                let newlink = itemData.links;
+                setTimeout(() => {
+                    wixLocation.to(newlink);
+                }, 1000);
+            });
+        });
+
+        $w('#matchBox').changeState('ThankYou');
+    });
+
+});

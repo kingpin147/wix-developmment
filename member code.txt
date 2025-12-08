@@ -1,0 +1,30 @@
+import wixLocation from 'wix-location';
+import wixMembers from 'wix-members';
+$w.onReady(() => {
+    wixMembers.authentication.onLogout(() => {
+        wixLocation.to('/')
+    })
+    if (wixLocation.url.includes("https://janecrofts.wixsite.com/dttp-member/account") && !wixMembers.authentication.loggedIn()) {
+        wixMembers.authentication.promptLogin({
+            mode: "login"
+        }).then(() => {
+            wixLocation.to(wixLocation.url)
+        })
+    }
+
+})
+
+
+import wixData from 'wix-data';
+export async function wixMembers_onMemberCreated(event) {
+    const eventId = event.metadata.id
+    const entityId = event.entity._id;
+    await wixData.insert("memberIframe", {
+        member: entityId,
+        "configureUrl": "https://www.questionpro.com/t/APbtMZh2wV",
+        "distributeUrl": "https://www.datatothepeople.org/distribute",
+        "profileUrl": "https://www.datatothepeople.org/results"
+    })
+}
+
+

@@ -1,0 +1,822 @@
+sendgrid.jsw
+
+import wixSecretsBackend from 'wix-secrets-backend';
+import sgMail from "@sendgrid/mail";
+
+export async function sendEmailToAdmin(data) {
+
+    const apiKey = await wixSecretsBackend.getSecret("SendGrid_API_Key");
+
+    sgMail.setApiKey(apiKey)
+
+    const msg = {
+        to: 'trase@socialtrase.com',
+        from: 'trase@socialtrase.com',
+        templateId: 'd-336021acea7f4194bec1a531654c485b',
+        dynamic_template_data: data,
+    };
+
+    // Send the email
+    sgMail.send(msg)
+        .then(() => console.log('Email sent successfully'))
+        .catch(error => console.error('Error sending email:', error));
+}
+
+// Whe, user submits the form
+export async function sendEmailToUSerForm(userEmail, data) {
+
+    const apiKey = await wixSecretsBackend.getSecret("SendGrid_API_Key");
+
+    sgMail.setApiKey(apiKey)
+
+    const msg = {
+        to: userEmail,
+        from: 'trase@socialtrase.com',
+        templateId: 'd-689524949b5e435e86c1ea08171027c4',
+        dynamic_template_data: data,
+    };
+
+    // Send the email
+    sgMail.send(msg)
+        .then(() => console.log('Email sent successfully'))
+        .catch(error => console.error('Error sending email:', error));
+}
+
+
+
+
+//triggered email
+//sendGrid.jsw
+
+import { triggeredEmails } from 'wix-crm-backend';
+
+export function sendEmailToAdmin(options) {
+    const emailId = "thanks_for_joining";
+    const memberId = "281924fb-e8ac-431e-a687-d7d6d1229183";
+
+    return triggeredEmails.emailMember(emailId, memberId, options)
+        .then(() => {
+            console.log("Email was sent to member");
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+}
+
+// export function sendMemberEmail(memberID) {
+//     const emailId = "thanks_for_joining";
+//     // const memberId = "281924fb-e8ac-431e-a687-d7d6d1229183";
+
+//     return triggeredEmails.emailMember(emailId, memberID, options)
+//         .then(() => {
+//             console.log("Email was sent to member");
+//         })
+//         .catch((error) => {
+//             console.error(error);
+//         });
+// }
+
+
+
+// user data
+//userData.jsw
+import wixData from 'wix-data';
+
+
+export async function allUsersData() {
+    console.log("inside allUsersData");
+	let options = {
+        "suppressAuth": true,
+        "suppressHooks": true
+    };
+
+    let allUsers = await wixData.query('Members/PrivateMembersData').find(options)
+	console.log("allUsers: ", allUsers);
+    return  allUsers.items
+
+}
+
+
+//ferretly.jsw
+
+import wixData from 'wix-data';
+import { fetch } from 'wix-fetch';
+import { sendEmailToAdmin } from 'backend/email.jsw';
+import { triggeredEmails } from 'wix-crm-backend';
+import { currentMember } from 'wix-members-backend';
+
+// Create a new Subject
+export async function createNewSubject() {
+    try {
+        const getFormSubmission = await wixData.query("AdditionalFormData").ne("userCreatedOnFerretly", true).find();
+        console.log("Form Submissions: ", getFormSubmission);
+
+        const items = getFormSubmission.items;
+
+        if (items.length > 0) {
+            for (const item of items) {
+                const apiUrl = "https://api.ferretly.com/api/Subjects";
+
+                let postData = {
+                    "SubjectData": {
+                        "Name": item.name,
+                        "ProfilePicUrl": item.profilePicUrl,
+                        "Address": item.address,
+                        "City": item.city,
+                        "State": item.state,
+                        "Email": item.email,
+                        "HighSchool": item.highSchool,
+                        "College": item.college,
+                        "Company": item.company,
+                        "Phone": item.phone,
+                        "TwitterUrl": item.twitterUrl,
+                        "FacebookUrl": item.facebookUrl,
+                        "InstagramUrl": item.instagramUrl,
+                        "LinkedInUrl": item.linkedInUrl,
+                        "TikTokUrl": item.tikTokUrl,
+                        "Tags": item.tags,
+                        "Country": item.country,
+                        "AgeOrDateOfBirth": item.ageOrDateOfBirth
+                    },
+                    "AssignToFerretlyAnalyst": true,
+                    "ExternalSystemId": "Subject1234",
+                }
+
+                console.log("Post Data: ", postData);
+
+                const requestOptions = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Api-Key': 'JDe10oqSZCK8hWyVe0knYmcvNM8Y/Jdmbjz7yow8Dhk=',
+                        // ... (unchanged)
+                    },
+                    body: JSON.stringify(postData),
+                    redirect: 'follow',
+                };
+
+                try {
+                    const response = await fetch(apiUrl, requestOptions);
+                    const responseData = await response.json();
+
+                    if (response.ok) {
+                        console.log("API response:", responseData);
+
+                        item.ferretlyUserId = responseData.id;
+                        item.userCreatedOnFerretly = true;
+
+                        const updatedData = await wixData.update("AdditionalFormData", item);
+                        console.log("Updated Data: ", updatedData);
+                    } else {
+                        console.error("API call failed:", response.status, response.statusText);
+
+                        // Prepare data for the email
+                        const data = {
+                            fullName: item.name,
+                            nickName: item.name,
+                            address: item.address,
+                            city: item.city,
+                            state: item.state,
+                            country: item.country,
+                            email: item.email,
+                            phone: item.phone,
+                            ageordob: item.ageOrDateOfBirth,
+                            profilePic: item.profilePicUrl,
+                            twitterUrl: item.twitterUrl,
+                            facebookUrl: item.facebookUrl,
+                            instagramUrl: item.instagramUrl,
+                            linkedinUrl: item.linkedInUrl,
+                            tiktokUrl: item.tikTokUrl,
+                            redditUrl: item.redditUrl,
+                            company: item.company,
+                            highSchool: item.highSchool,
+                            college: item.college,
+                            tags: item.tags
+                        }
+
+                        // Send email to admin
+                        await sendEmailToAdmin(data);
+                        console.log("Send Email: ", sendEmailToAdmin);
+                    }
+                } catch (error) {
+                    console.error("Error during API call:", error);
+
+                    // Prepare data for the email
+                    const data = {
+                        fullName: item.name,
+                        nickName: item.name,
+                        address: item.address,
+                        city: item.city,
+                        state: item.state,
+                        country: item.country,
+                        email: item.email,
+                        phone: item.phone,
+                        ageordob: item.ageOrDateOfBirth,
+                        profilePic: item.profilePicUrl,
+                        twitterUrl: item.twitterUrl,
+                        facebookUrl: item.facebookUrl,
+                        instagramUrl: item.instagramUrl,
+                        linkedinUrl: item.linkedInUrl,
+                        tiktokUrl: item.tikTokUrl,
+                        redditUrl: item.redditUrl,
+                        company: item.company,
+                        highSchool: item.highSchool,
+                        college: item.college,
+                        tags: item.tags
+                    }
+
+                    // Send email to admin
+                    await sendEmailToAdmin(data);
+                    console.log("Send Email: ", sendEmailToAdmin);
+                }
+            }
+        }
+
+    } catch (error) {
+        console.error("Error fetching data:", error);
+
+    }
+}
+
+// Create a new Subject
+export async function checkSubjectStatus() {
+    console.log("run checkSubjectStatus: ");
+    try {
+        let allSubjects = await wixData.query("SubjectIDs").find();
+        console.log("allSubjects: ", allSubjects.items);
+        await allSubjects.items.forEach(async (element) => {
+            console.log("element?.emailSent", element.emailSent)
+            if (!(element?.emailSent)) {
+                console.log("element: ", element);
+                let checkStatus = await getBackgroundCheckStatus(element.subjectId)
+
+                if (checkStatus === "Complete"|| checkStatus === "Redressing") {
+                    console.log("checkStatus: ", checkStatus);
+
+                    await triggeredEmails.emailMember('Tx22FGr', element.memberId, {
+                            variables: {
+                                fullName: element.name
+                            }
+                        })
+                        .then(async () => {
+                            let toUpdate = {
+                                '_id': element._id,
+                                'reference': element.reference,
+                                'externalId': element.externalId,
+                                'email': element.email,
+                                'status': checkStatus,
+                                'subjectId': element.subjectId,
+                                'name': element.name,
+                                'title': element.title,
+                                'complete': true,
+                                'memberId': element.memberId,
+                                'emailSent': true
+                            }
+
+                            await wixData.update('SubjectIDs', toUpdate)
+                        })
+
+                } else {
+
+                    // let checkStatus = await getBackgroundCheckStatus(element.subjectId)
+                    console.log("status else ", checkStatus)
+                    if (checkStatus === "None") {
+
+                        checkStatus = "Not Initiated";
+                    }
+                    let toUpdate = {
+                        '_id': element._id,
+                        'reference': element.reference,
+                        'externalId': element.externalId,
+                        'email': element.email,
+                        'status': checkStatus,
+                        'subjectId': element.subjectId,
+                        'name': element.name,
+                        'title': element.title,
+                        'complete': false,
+
+                        'memberId': element.memberId,
+                        'emailSent': false
+                    }
+
+                    await wixData.update('SubjectIDs', toUpdate)
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching data:", error);
+    }
+}
+
+// Get All Subjects
+export async function getAllSubjects() {
+
+    const apiUrl = `https://api.ferretly.com/api/Subjects`;
+
+    const requestOptions = {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Api-Key': 'JDe10oqSZCK8hWyVe0knYmcvNM8Y/Jdmbjz7yow8Dhk=',
+            'Cookie': 'ARRAffinity=29544c2e1ca09d13219b60a14bd5314f36a56549cdd27c5b875285abe5b389f2; ARRAffinitySameSite=29544c2e1ca09d13219b60a14bd5314f36a56549cdd27c5b875285abe5b389f2',
+        },
+        redirect: 'follow',
+    };
+
+    try {
+        const response = await fetch(apiUrl, requestOptions);
+        if (response.ok) {
+            const data = await response.json();
+            console.log("API response:", data);
+
+            // return data;
+            return data;
+        } else {
+            console.error("API call failed:", response.status, response.statusText);
+        }
+    } catch (error) {
+        console.log('Error:', error);
+        return error;
+    }
+}
+
+// Get Backgroud Check Request Status
+export async function getBackgroundCheckStatus(subjectId) {
+
+    const apiUrl = `https://api.ferretly.com/api/Subjects/${subjectId}/screeningstatus`;
+
+    const requestOptions = {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Api-Key': 'JDe10oqSZCK8hWyVe0knYmcvNM8Y/Jdmbjz7yow8Dhk=',
+            // 'Cookie': 'ARRAffinity=29544c2e1ca09d13219b60a14bd5314f36a56549cdd27c5b875285abe5b389f2; ARRAffinitySameSite=29544c2e1ca09d13219b60a14bd5314f36a56549cdd27c5b875285abe5b389f2',
+        },
+        redirect: 'follow',
+    };
+
+    try {
+        const response = await fetch(apiUrl, requestOptions);
+        if (response.ok) {
+            // console.log("response: ", response);
+            const data = await response.json();
+
+            // console.log("API response:", data);
+
+            return data;
+        } else {
+            console.error("API call failed:", response.status, response.statusText);
+        }
+    } catch (error) {
+        console.log('Error:', error);
+        return error;
+    }
+}
+
+// Download PDF
+export async function downloadBackgroundReport(subjectId) {
+
+    const apiUrl = `https://api.ferretly.com/api/Subjects/${subjectId}/downloadBackgroundReport`;
+
+    const requestOptions = {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Api-Key': 'JDe10oqSZCK8hWyVe0knYmcvNM8Y/Jdmbjz7yow8Dhk=',
+            'Cookie': 'ARRAffinity=29544c2e1ca09d13219b60a14bd5314f36a56549cdd27c5b875285abe5b389f2; ARRAffinitySameSite=29544c2e1ca09d13219b60a14bd5314f36a56549cdd27c5b875285abe5b389f2',
+        },
+        redirect: 'follow',
+    };
+
+    try {
+        const response = await fetch(apiUrl, requestOptions);
+        if (response.ok) {
+            const data = await response.text();
+            console.log("API response:", data);
+
+            return data;
+
+        } else {
+            console.error("API call failed:", response.status, response.statusText);
+        }
+    } catch (error) {
+        console.log('Error:', error);
+        return error;
+    }
+}
+
+export function getCurrentMembe(options) {
+    return currentMember.getMember(options)
+        .then((member) => {
+            console.log("member: ", member);
+            //   const memberId = member._id;
+            //   const fullName = `${member.contactDetails.firstName} ${member.contactDetails.lastName}`;
+            //   const memberProfilePage = `https://yoursite.com/profile/${member.profile.slug}/profile`;
+
+            return member._id;
+        })
+        .catch((error) => {
+            console.error(error);
+        })
+}
+//dev nabeel
+
+// Create a new Subject
+export async function CreateSubject(item, insertID) {
+    try {
+        console.log("get item", item)
+
+        const apiUrl = "https://api.ferretly.com/api/Subjects";
+
+        let postData = {
+            "SubjectData": {
+                "Name": item.name,
+                "ProfilePicUrl": item.profilePicUrl,
+                "Address": item.address,
+                "City": item.city,
+                "State": item.state,
+                "Email": item.email,
+                "HighSchool": item.highSchool,
+                "College": item.college,
+                "Company": item.company,
+                "Phone": item.phone,
+                "TwitterUrl": item.twitterUrl,
+                "FacebookUrl": item.facebookUrl,
+                "InstagramUrl": item.instagramUrl,
+                "LinkedInUrl": item.linkedInUrl,
+                "TikTokUrl": item.tikTokUrl,
+                "Tags": item.tags,
+                "Country": item.country,
+                "AgeOrDateOfBirth": item.ageOrDateOfBirth
+            },
+            "AssignToFerretlyAnalyst": true,
+            "ExternalSystemId": item.externalSystemID,
+        }
+
+        console.log("Post Data: ", postData);
+
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Api-Key': 'JDe10oqSZCK8hWyVe0knYmcvNM8Y/Jdmbjz7yow8Dhk=',
+                // ... (unchanged)
+            },
+            body: JSON.stringify(postData),
+            redirect: 'follow',
+        };
+
+        try {
+            const response = await fetch(apiUrl, requestOptions);
+            const responseData = await response.json();
+
+            if (response.ok) {
+                console.log("API response:", responseData);
+                // let currentMemberId = await getCurrentMembe()
+                item.ferretlyUserId = responseData.id;
+                item.userCreatedOnFerretly = true;
+                let toInsert = {
+                    'externalId': item.externalSystemID,
+                    'email': item.email,
+                    'subjectId': responseData.id,
+                    'name': item.name,
+                    'memberId': item.memberID
+                }
+
+                let insertSubjectData = await wixData.insert('SubjectIDs', toInsert)
+                if (insertSubjectData) {
+                    wixData.insertReference("SubjectIDs", "reference", insertSubjectData._id, insertID)
+                        .then(() => {
+                            console.log("Reference inserted");
+                        })
+                        .catch((error) => {
+                            console.log(error);
+                        });
+                }
+
+                // const updatedData = await wixData.update("AdditionalFormData", item);
+                // console.log("Updated Data: ", updatedData);
+            } else {
+                console.error("API call failed:", response.status, response.statusText);
+
+                // Prepare data for the email
+                const data = {
+                    fullName: item.name,
+                    nickName: item.name,
+                    address: item.address,
+                    city: item.city,
+                    state: item.state,
+                    country: item.country,
+                    email: item.email,
+                    phone: item.phone,
+                    ageordob: item.ageOrDateOfBirth,
+                    profilePic: item.profilePicUrl,
+                    twitterUrl: item.twitterUrl,
+                    facebookUrl: item.facebookUrl,
+                    instagramUrl: item.instagramUrl,
+                    linkedinUrl: item.linkedInUrl,
+                    tiktokUrl: item.tikTokUrl,
+                    redditUrl: item.redditUrl,
+                    company: item.company,
+                    highSchool: item.highSchool,
+                    college: item.college,
+                    tags: item.tags
+                }
+
+                // Send email to admin
+                // await sendEmailToAdmin(data);
+                console.log("Send Email: ", sendEmailToAdmin);
+            }
+        } catch (error) {
+            console.error("Error during API call:", error);
+
+            // Prepare data for the email
+            const data = {
+                fullName: item.name,
+                nickName: item.name,
+                address: item.address,
+                city: item.city,
+                state: item.state,
+                country: item.country,
+                email: item.email,
+                phone: item.phone,
+                ageordob: item.ageOrDateOfBirth,
+                profilePic: item.profilePicUrl,
+                twitterUrl: item.twitterUrl,
+                facebookUrl: item.facebookUrl,
+                instagramUrl: item.instagramUrl,
+                linkedinUrl: item.linkedInUrl,
+                tiktokUrl: item.tikTokUrl,
+                redditUrl: item.redditUrl,
+                company: item.company,
+                highSchool: item.highSchool,
+                college: item.college,
+                tags: item.tags
+            }
+
+            // Send email to admin
+            // await sendEmailToAdmin(data);
+            console.log("Send Email: ", sendEmailToAdmin);
+        }
+
+    } catch (error) {
+        console.error("Error fetching data:", error);
+    }
+}
+// Get Backgroud Check Request Status
+export async function getBackgroundCheckResults(subjectId) {
+
+    const apiUrl = `https://api.ferretly.com/api/Subjects/${subjectId}/backgroundCheckResults`;
+
+    const requestOptions = {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Api-Key': 'JDe10oqSZCK8hWyVe0knYmcvNM8Y/Jdmbjz7yow8Dhk=',
+            // 'Cookie': 'ARRAffinity=29544c2e1ca09d13219b60a14bd5314f36a56549cdd27c5b875285abe5b389f2; ARRAffinitySameSite=29544c2e1ca09d13219b60a14bd5314f36a56549cdd27c5b875285abe5b389f2',
+        },
+        redirect: 'follow',
+    };
+
+    try {
+        const response = await fetch(apiUrl, requestOptions);
+        if (response.ok) {
+            // console.log("response: ", response);
+            const data = await response.json();
+
+            // console.log("API response:", data);
+
+            return data;
+        } else {
+            console.error("API call failed:", response.status, response.statusText);
+        }
+    } catch (error) {
+        console.log('Error:', error);
+        return error;
+    }
+}
+
+
+//wix pricing plan 
+import wixPricingPlansBackend from 'wix-pricing-plans-backend';
+
+export function myGetPlanFunction() {
+  const id = '3ed419fd-e265-4d34-b0cc-88a2fafc58e2';
+
+  return wixPricingPlansBackend.getPlan(id)
+    .then((plan) => {
+      console.log(plan);
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}
+
+
+//http-functions.js
+
+import { fetch } from 'wix-fetch';
+
+export function updateWebhooks(params) {
+    var raw = "https: //www.socialtrase.com/event/webhookTrigger";
+
+    var requestOptions = {
+        method: 'POST',
+        body: raw,
+        redirect: 'follow'
+    };
+
+    fetch("https://api.ferretly.com/ApiClient/updateWebHook", requestOptions)
+        .then(response => response.text())
+        .then(result => console.log("result: ", result))
+        .catch(error => console.log('error', error));
+}
+
+
+//jobs config
+
+// ***********************************************************
+// Checking subject status and email START
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "checkSubjectStatus",
+        "description": "Checking the status of currently not completed subjects. If new status is complete then email will trigger and update the database",
+        "executionConfig": {
+            "cronExpression": "0 * * * *"
+        }
+    }]
+}
+
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "checkSubjectStatus",
+        "description": "Checking the status of currently not completed subjects. If new status is complete then email will trigger and update the database",
+        "executionConfig": {
+            "cronExpression": "10 * * * *"
+        }
+    }]
+}
+
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "checkSubjectStatus",
+        "description": "Checking the status of currently not completed subjects. If new status is complete then email will trigger and update the database",
+        "executionConfig": {
+            "cronExpression": "20 * * * *"
+        }
+    }]
+}
+
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "checkSubjectStatus",
+        "description": "Checking the status of currently not completed subjects. If new status is complete then email will trigger and update the database",
+        "executionConfig": {
+            "cronExpression": "30 * * * *"
+        }
+    }]
+}
+
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "checkSubjectStatus",
+        "description": "Checking the status of currently not completed subjects. If new status is complete then email will trigger and update the database",
+        "executionConfig": {
+            "cronExpression": "40 * * * *"
+        }
+    }]
+}
+
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "checkSubjectStatus",
+        "description": "Checking the status of currently not completed subjects. If new status is complete then email will trigger and update the database",
+        "executionConfig": {
+            "cronExpression": "50 * * * *"
+        }
+    }]
+}
+
+// Checking subject status and email END
+// ***********************************************************
+
+
+
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "createNewSubject",
+        "description": "Check every item for sending call to API",
+        "executionConfig": {
+            "cronExpression": "0 * * * *"
+        }
+    }]
+}
+
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "createNewSubject",
+        "description": "Check every item for sending call to API",
+        "executionConfig": {
+            "cronExpression": "0 * * * *"
+        }
+    }]
+}
+
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "createNewSubject",
+        "description": "Check every item for sending call to API",
+        "executionConfig": {
+            "cronExpression": "0 * * * *"
+        }
+    }]
+}
+
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "createNewSubject",
+        "description": "Check every item for sending call to API",
+        "executionConfig": {
+            "cronExpression": "0 * * * *"
+        }
+    }]
+}
+
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "createNewSubject",
+        "description": "Check every item for sending call to API",
+        "executionConfig": {
+            "cronExpression": "0 * * * *"
+        }
+    }]
+}
+
+{
+    "jobs": [{
+        "functionLocation": "/ferretly.jsw",
+        "functionName": "createNewSubject",
+        "description": "Check every item for sending call to API",
+        "executionConfig": {
+            "cronExpression": "0 * * * *"
+        }
+    }]
+}
+
+
+// functions.js
+
+// ---------------------------------------- Change Image URL ---------------------------------------- //
+export function getFullImageURL(imageSRC) {
+    if (imageSRC.startsWith("wix:image://v1/")) {
+        let wixImageURL = "";
+        wixImageURL = "https://static.wixstatic.com/media/";
+        let wixLocalURL = "";
+        wixLocalURL = imageSRC.replace('wix:image://v1/', '');
+        wixLocalURL = wixLocalURL.slice(0, wixLocalURL.indexOf('/'));
+        return wixImageURL + wixLocalURL;
+    } else {
+        return imageSRC;
+    }
+}
+
+export function generateCurrentDate() {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    const yyyy = today.getFullYear();
+
+    const formattedDate = mm + '/' + dd + '/' + yyyy;
+
+    return formattedDate
+}
+
+// 
+export function processUrl(checkvalue, inputValue, url) {
+    // Check if the input is a full URL or just a handle
+    if (inputValue.includes(checkvalue)) {
+        // Input is a full URL, return it as is
+        return inputValue;
+    } else {
+        // Input is a handle, append the base URL
+        const baseUrl = url;
+        return baseUrl + inputValue;
+    }
+}
+
+export function generateRequestNum(params) {
+    const random = Math.floor(Math.random() * 9000 + 1000);
+
+    return `ST0000${random}`;
+}

@@ -1,0 +1,136 @@
+import { checkAccess } from 'backend/accessControl';
+import wixUsers from 'wix-users';
+import { currentMember } from 'wix-members-frontend';
+import wixLocation from 'wix-location';
+import wixData from 'wix-data';
+import { GetContactWorkflows } from 'backend/SuperDocu.jsw';
+
+$w.onReady(async function () {
+    const currentJobId = $w("#dynamicDataset").getCurrentItem().jobId;
+    let userEmail = "";
+    let contactID = null;
+    let statuses = new Array(20).fill("");
+
+    // Get the logged-in user's email
+    try {
+        const user = wixUsers.currentUser;
+        if (!user.loggedIn) {
+            wixLocation.to("/not-authorized");
+            return;
+        }
+        userEmail = await user.getEmail();
+        const member = await currentMember.getMember();
+        console.log(member._id); // Use this if needed
+    } catch (err) {
+        console.error("Error checking user email:", err);
+        wixLocation.to("/not-authorized");
+        return;
+    }
+
+    // Check access using the backend function
+    try {
+        const hasAccess = await checkAccess(currentJobId, userEmail);
+        if (!hasAccess) {
+            wixLocation.to("/not-authorized");
+            return;
+        }
+        $w("#section1").show();
+    } catch (err) {
+        console.error("Error checking access:", err);
+        wixLocation.to("/not-authorized");
+        return;
+    }
+
+    // Get contact ID from the database
+    try {
+        const results = await wixData.query("testSuperDocu").eq("email", userEmail).find();
+        if (results.items.length > 0) {
+            contactID = results.items[0].contactId;
+        } else {
+            console.log("No matching email found");
+            return; // Exit if no contact ID is found
+        }
+    } catch (err) {
+        console.error("Error querying testSuperDocu:", err);
+        return; // Exit on error
+    }
+
+    // Get days and workflow IDs from the database
+    let dayTasks = [];
+    try {
+        const results = await wixData.query("News").find();
+        if (results.items.length > 0) {
+            dayTasks = results.items.map(item => ({
+                day: item.reporterName,  // Assuming reporterName is the day
+                workflowId: item.workflowId
+            }));
+        }
+    } catch (err) {
+        console.error("Error querying the News collection:", err);
+    }
+
+    // Get workflow statuses from the API
+    let workflowStatuses = [];
+    try {
+        workflowStatuses = await GetContactWorkflows(contactID);
+    } catch (err) {
+        console.error("Error fetching workflow statuses:", err);
+    }
+
+    // Update statuses based on day tasks and API response
+    dayTasks.forEach(task => {
+        const workflowStatus = workflowStatuses.find(status => status.workflow_id === task.workflowId);
+        if (workflowStatus && workflowStatus.name.includes(task.day)) {
+            const dayNumber = parseInt(task.day.match(/\d+/)[0]); // Extract the day number
+            if (dayNumber >= 1 && dayNumber <= 20) {
+                statuses[dayNumber - 1] = workflowStatus.status;
+            }
+        }
+    });
+
+    // Prepare data to update the MemberInternships database
+    let toUpdateStatus = {
+        contactId: contactID,
+        statusDay01: statuses[0],
+        statusDay02: statuses[1],
+        statusDay03: statuses[2],
+        statusDay04: statuses[3],
+        statusDay05: statuses[4],
+        statusDay06: statuses[5],
+        statusDay07: statuses[6],
+        statusDay08: statuses[7],
+        statusDay09: statuses[8],
+        statusDay10: statuses[9],
+        statusDay11: statuses[10],
+        statusDay12: statuses[11],
+        statusDay13: statuses[12],
+        statusDay14: statuses[13],
+        statusDay15: statuses[14],
+        statusDay16: statuses[15],
+        statusDay17: statuses[16],
+        statusDay18: statuses[17],
+        statusDay19: statuses[18],
+        statusDay20: statuses[19]
+    };
+
+    // Update the MemberInternships database
+    try {
+        const result = await wixData.query("MemberInternships")
+            .eq("jobId", currentJobId)
+            .find();
+
+        if (result.items.length > 0) {
+            const matchingItem = result.items.find(item => item.title === userEmail);
+            if (matchingItem) {
+                const updatedItem = await wixData.update("MemberInternships", { ...matchingItem, ...toUpdateStatus });
+                console.log('Updated Item:', updatedItem);
+            } else {
+                console.log("No matching title found");
+            }
+        } else {
+            console.log("No matching jobId found");
+        }
+    } catch (err) {
+        console.error("Error updating MemberInternships:", err);
+    }
+});

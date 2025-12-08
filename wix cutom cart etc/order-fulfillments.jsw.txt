@@ -1,0 +1,28 @@
+order-fulfillments.jsw
+
+import wixStoresBackend from 'wix-stores-backend'
+
+
+export function createFulfillment(orderInfo, trackingNumber, trackingLink) {
+  let lineItems = []
+  orderInfo.lineItems.forEach((lineItem, index)=>{
+    lineItems.push({index: index + 1, quantity: lineItem.quantity})
+  })
+    const fulfillment = {
+    "lineItems": lineItems,
+    "trackingInfo": {
+        "shippingProvider": "dhl",
+        "trackingLink": trackingLink,
+        "trackingNumber": trackingNumber
+    }
+    }
+  return wixStoresBackend.createFulfillment(orderInfo._id, fulfillment)
+    .then((updatedOrder) => {
+      console.log("Fulfillment created for order: ", updatedOrder)
+      return updatedOrder
+    })
+    .catch(error => {
+      // Fulfillment not created
+      console.error(error)
+    })
+}

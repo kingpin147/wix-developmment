@@ -1,0 +1,747 @@
+dhl.jsw
+
+var axios = require("axios").default;
+import wixData from 'wix-data';
+import wixSecretsBackend from 'wix-secrets-backend';
+import { createFulfillment } from "backend/order-fulfillments.jsw";
+import { uploadPdf } from "backend/uploadLabels.js";
+const { euMember } = require('is-european');
+import { triggeredEmails } from 'wix-crm-backend';
+
+const countryPostalCodes = {
+    "AT": 4, // Austria
+    "BE": 4, // Belgium
+    "BG": 4, // Bulgaria
+    "HR": 5, // Croatia
+    "CY": 4, // Cyprus
+    "CZ": 5, // Czech Republic
+    "DK": 4, // Denmark
+    "EE": 5, // Estonia
+    "FR": 5, // France
+    "DE": 5, // Germany
+    "GR": 5, // Greece
+    "HU": 4, // Hungary
+    "IE": 7, // Ireland
+    "IT": 5, // Italy
+    "LV": 4, // Latvia
+    "LT": 5, // Lithuania
+    "LU": 4, // Luxembourg
+    "MT": 3, // Malta
+    "NL": 6, // Netherlands
+    "PL": 6, // Poland
+    "PT": 7, // Portugal
+    "RO": 6, // Romania
+    "SK": 5, // Slovakia
+    "SI": 4, // Slovenia
+    "ES": 5, // Spain
+    "SE": 5  // Sweden
+};
+
+const getCountryISO2 = require("country-iso-3-to-2");
+const fs = require('fs-fs');
+
+export async function get() {
+    return await wixData.query('Stores/Orders').limit(100).find()
+        .then((result) => {
+            return result.items
+        })
+}
+
+export async function createShipment(orderInfo) {
+    const isEuropeanCountry = await isEuropean(orderInfo.recipientInfo.address.country)
+    if (isEuropeanCountry == true) {
+        console.log("Is a european country")
+        await germanyShipments(orderInfo)
+            .then((shipmentInfo) => {
+                // console.log("**************************shipmentInfo *******************************", shipmentInfo)
+                // return shipmentInfo
+                const trackingNumber = shipmentInfo.shipmentTrackingNumber
+                const trackingLink = `https://www.dhl.com/us-en/home/tracking.html?locale=true&tracking-id=${shipmentInfo.shipmentTrackingNumber}`
+                const date = new Date().toDateString()
+                const name = "Germany Account" + " - " + date
+                saveLabel(orderInfo._id, shipmentInfo, name, date, "germany")
+                createFulfillment(orderInfo, trackingNumber, trackingLink)
+                    .then(() => {
+                        console.log("order fulfilled")
+                    })
+            }).catch((error) => {
+                console.log("error in creating germany shipment: ", error)
+                return error
+            })
+    } else {
+        console.log("not a european country")
+        return false
+        await malaysiaShipments(orderInfo)
+            .then((shipmentInfo) => {
+                const trackingNumber = shipmentInfo.shipmentTrackingNumber
+                const trackingLink = `https://www.dhl.com/us-en/home/tracking.html?locale=true&tracking-id=${shipmentInfo.shipmentTrackingNumber}`
+                const date = new Date().toDateString()
+                const name = "Malaysia Account" + " - " + date
+                createFulfillment(orderInfo, trackingNumber, trackingLink)
+                    .then(() => {
+                        console.log("order fulfilled")
+                        saveLabel(orderInfo._id, shipmentInfo, name, date, "malaysia")
+                    })
+            }).catch((error) => {
+                return error
+            })
+
+    }
+}
+
+export async function trackShipment(trackingNumber) {
+    let config = {
+        method: 'get',
+        url: `https://express.api.dhl.com/mydhlapi/shipments/${trackingNumber}/tracking`,
+        headers: {
+            'x-api-key': 'a3aa8359e79248bea3c77b7fea4c54fd',
+            'Authorization': 'Basic M25pdHllcXVpdmFERTpEXjdzTV40YVEkMG5EXjFw'
+        }
+    };
+    return await axios.request(config)
+        .then((response) => {
+            return response.data
+        })
+        .catch((error) => {
+            return error
+        });
+}
+
+
+
+export async function germanyShipments(orderInfo) {
+    const date = new Date()
+    let country = ""
+    date.setHours(date.getHours() + 8)
+    date.setMinutes(date.getMinutes() + 2)
+    const currentDate = date.toISOString()
+    const plannedShippingDateAndTime = currentDate.split(".")[0] + "GMT+08:00"
+    let productCode = "N"
+    if (orderInfo.recipientInfo.address.country.length > 2) {
+        country = await getCountryISO2(orderInfo.recipientInfo.address.country)
+    } else {
+        country = orderInfo.recipientInfo.address.country
+    }
+    if (country == "DE") {
+        productCode = "N"
+    } else {
+        productCode = "U"
+    }
+    let addressLine = ""
+    if (orderInfo.recipientInfo.address.addressLine1 == undefined) {
+        console.log("IF ******************************")
+        if (orderInfo.recipientInfo.address.addressLine2 == undefined) {
+            const address = orderInfo.recipientInfo.address
+            addressLine = address.streetAddress.number + " " + address.streetAddress.name + ", " + address.city + ", " + address.postalCode + ", " + address.country
+            addressLine = addressLine.slice(0, 45)
+        } else if (orderInfo.recipientInfo.address.addressLine2 != undefined) {
+            addressLine = orderInfo.recipientInfo.address.addressLine2.slice(0, 45)
+        }
+    } else {
+        console.log("else ********************")
+        addressLine = orderInfo.recipientInfo.address.addressLine1.slice(0, 45)
+    }
+    const skuList = {
+        "SP15MG7ML": "15MG",
+        "SP15MG7ML6": "15MG",
+        "SP15MG7ML12": "15MG",
+        "SP20MG7ML": "20MG",
+        "SP20MG7ML6": "20MG",
+        "SP20MG7ML12": "20MG",
+        "SP20B7ML": "20MG B12",
+        "SP20B7ML6": "20MG B12",
+        "SP20B7ML12": "20MG B12",
+        "SP30MG7ML": "30MG",
+        "SP30MG7ML6": "30MG",
+        "SP30MG7ML12": "30MG",
+        "SP40MG7ML": "40MG",
+        "SP40MG7ML6": "40MG",
+        "SP40MG7ML12": "40MG",
+        "SPP45MG": "PINK",
+        "SPG75MG": "GREEN",
+        "SPB105MG": "BLUE",
+        "SP30B8ML": "30MG B12",
+        "SP30B8ML6": "30MG B12",
+        "SP30B8ML12": "30MG B12",
+        "SP20G7ML": "20MG B12",
+        "SP20G7ML6": "20MG B12",
+        "SP20G7ML12": "20MG B12",
+    }
+    const skuQuantity = {
+        "SP15MG7ML": 1,
+        "SP15MG7ML6": 6,
+        "SP15MG7ML12": 12,
+        "SP20MG7ML": 1,
+        "SP20MG7ML6": 6,
+        "SP20MG7ML12": 12,
+        "SP20B7ML": 1,
+        "SP20B7ML6": 6,
+        "SP20B7ML12": 12,
+        "SP30MG7ML": 1,
+        "SP30MG7ML6": 6,
+        "SP30MG7ML12": 12,
+        "SP40MG7ML": 1,
+        "SP40MG7ML6": 6,
+        "SP40MG7ML12": 12,
+        "SPP45MG": 1,
+        "SPG75MG": 1,
+        "SPB105MG": 1,
+        "SP30B8ML": 1,
+        "SP30B8ML6": 6,
+        "SP30B8ML12": 12
+    }
+    const apiKey = await wixSecretsBackend.getSecret("germany-key")
+    let unit_price = 20.00,
+        lineItems = [],
+        quantity = 0,
+        total = 0.00,
+        description = "";
+    const account = [{ "typeCode": "shipper", "number": "148605080" }]
+    let customer = {
+        "shipperDetails": {
+            "postalAddress": {
+                "cityName": "BERLIN",
+                "countryCode": "DE",
+                "postalCode": "10585",
+                "addressLine1": "KRUMME STRASSE 77"
+            },
+            "contactInformation": {
+                "email": "abbylaw1400@gmail.com",
+                "phone": "‭+4917664796620",
+                "companyName": "PERK LABS CO",
+                "fullName": "ADEBIMPE JOLAOSO"
+            }
+        },
+        "receiverDetails": {
+            "postalAddress": {},
+            "contactInformation": {}
+        }
+    }
+
+    let weight = 0.0
+
+    orderInfo.lineItems.forEach((lineItem, index) => {
+        quantity += lineItem.quantity
+        weight += lineItem.physicalProperties.weight * lineItem.quantity
+        if (index < lineItems.length - 1) {
+            description = description + (lineItem.quantity * skuQuantity[lineItem.physicalProperties.sku]) + " - " + skuList[lineItem.physicalProperties.sku] + ", "
+        } else {
+            description = description + (lineItem.quantity * skuQuantity[lineItem.physicalProperties.sku]) + " - " + skuList[lineItem.physicalProperties.sku] + " "
+        }
+    })
+    weight = parseFloat(weight.toFixed(3))
+    if (quantity <= 2) {
+        unit_price = 20.00
+    } else if (quantity >= 3 && quantity <= 6) {
+        unit_price = 10.00
+    } else if (quantity >= 7) {
+        unit_price = 5.00
+    }
+    total = total + (unit_price * quantity)
+    customer.receiverDetails.postalAddress = {
+        "postalCode": orderInfo.recipientInfo.address.postalCode,
+        "cityName": orderInfo.recipientInfo.address.city,
+        "countryCode": country,
+        "addressLine1": addressLine
+    }
+    customer.receiverDetails.contactInformation = {
+        "email": orderInfo.buyerInfo.email,
+        "phone": orderInfo.billingInfo.contactDetails.phone,
+        "companyName": orderInfo.billingInfo.contactDetails.firstName + " " + orderInfo.billingInfo.contactDetails.lastName,
+        "fullName": orderInfo.billingInfo.contactDetails.firstName + " " + orderInfo.billingInfo.contactDetails.lastName
+    }
+    let cleanedPostalCode = customer.receiverDetails.postalAddress.postalCode.replace(/\D/g, '');
+    const count = countryPostalCodes[country]
+    customer.receiverDetails.postalAddress.postalCode = cleanedPostalCode.slice(-count)   
+    const data = {
+        "plannedShippingDateAndTime": plannedShippingDateAndTime,
+        "pickup": {},
+        "productCode": productCode,
+        "getRateEstimates": false,
+        "accounts": account,
+        "valueAddedServices": [],
+        "outputImageProperties": {
+            "imageOptions": [{
+                "typeCode": "label",
+                "templateName": "ECOM26_A6_002",
+                "isRequested": true,
+                "renderDHLLogo": true
+            }],
+            "splitTransportAndWaybillDocLabels": false,
+            "allDocumentsInOneImage": false,
+            "splitDocumentsByPages": false,
+            "splitInvoiceAndReceipt": false
+        },
+        "customerDetails": customer,
+        "content": {
+            "packages": [{
+                "weight": weight,
+                "dimensions": { length: 10.0, width: 10.0, height: 10.0 },
+                "customerReferences": [{
+                    "value": String(orderInfo.number),
+                    "typeCode": "CU"
+                }],
+                "description": description,
+            }],
+            "isCustomsDeclarable": false,
+            "declaredValue": total,
+            "declaredValueCurrency": "EUR",
+            "description": description,
+            "incoterm": "DAP",
+            "unitOfMeasurement": "metric"
+        },
+        "requestOndemandDeliveryURL": false,
+        "getOptionalInformation": false
+    }
+    data.pickup = {
+        "isRequested": false,
+    }
+
+    var options = {
+        "method": 'post',
+        "url": "https://express.api.dhl.com/mydhlapi/shipments",
+        "headers": {
+            'content-type': 'application/json',
+            'x-api-key': apiKey,
+            'Authorization': 'Basic M25pdHllcXVpdmFERTpEXjdzTV40YVEkMG5EXjFw',
+        },
+        "data": data
+    }
+    console.log("request data: ", data)
+    return await axios.request(options).then(function (response) {
+        return response.data
+    }).catch(function (error) {
+        console.log("error in shipment: ", error)
+    });
+}
+
+export async function malaysiaShipments(orderInfo) {
+    const date = new Date()
+    date.setHours(date.getHours() + 8)
+    date.setMinutes(date.getMinutes() + 2)
+    const currentDate = date.toISOString()
+    const day = currentDate.split("T")[0]
+    const plannedShippingDateAndTime = currentDate.split(".")[0] + "GMT+08:00"
+    let addressLine = ""
+    if (orderInfo.recipientInfo.address.addressLine1 == undefined) {
+        if (orderInfo.recipientInfo.address.addressLine2 == undefined) {
+            const address = orderInfo.recipientInfo.address
+            addressLine = address.streetAddress.number + " " + address.streetAddress.name + ", " + address.city + ", " + address.postalCode + ", " + address.country
+        } else if (orderInfo.recipientInfo.address.addressLine2 != undefined) {
+            addressLine = orderInfo.recipientInfo.address.addressLine2.slice(0, 45)
+        }
+    } else {
+        addressLine = orderInfo.recipientInfo.address.addressLine1.slice(0, 45)
+    }
+
+    return plannedShippingDateAndTime
+    // const plannedShippingDateAndTime = "2024-04-19T15:15:48GMT+08:00" //"2024-04-13T22:50:31 GMT+08:00"
+    let productCode = "N"
+    const country = await getCountryISO2(orderInfo.recipientInfo.address.country)
+    if (country == "MY") {
+        productCode = "N"
+    } else {
+        productCode = "U"
+    }
+    const skuList = {
+        "SP15MG7ML": "15MG",
+        "SP15MG7ML6": "15MG",
+        "SP15MG7ML12": "15MG",
+        "SP20MG7ML": "20MG",
+        "SP20MG7ML6": "20MG",
+        "SP20MG7ML12": "20MG",
+        "SP20B7ML": "20MG B12",
+        "SP20B7ML6": "20MG B12",
+        "SP20B7ML12": "20MG B12",
+        "SP30MG7ML": "30MG",
+        "SP30MG7ML6": "30MG",
+        "SP30MG7ML12": "30MG",
+        "SP40MG7ML": "40MG",
+        "SP40MG7ML6": "40MG",
+        "SP40MG7ML12": "40MG",
+        "SPP45MG": "PINK",
+        "SPG75MG": "GREEN",
+        "SPB105MG": "BLUE",
+        "SP30B8ML": "30MG B12",
+        "SP30B8ML6": "30MG B12",
+        "SP30B8ML12": "30MG B12",
+        "SP20G7ML": "20MG B12",
+        "SP20G7ML6": "20MG B12",
+        "SP20G7ML12": "20MG B12",
+    }
+    const apiKey = await wixSecretsBackend.getSecret("malaysia-key")
+    let unit_price = 20.00,
+        lineItems = [],
+        quantity = 0,
+        total = 0.00,
+        description = "";
+    const account = [{
+        "number": "558921833",
+        "typeCode": "shipper"
+    }]
+    const customer = {
+        "shipperDetails": {
+            "postalAddress": {
+                "cityName": "Seri Kembangan",
+                "countryCode": "MY",
+                "provinceCode": "Selangor",
+                "postalCode": "43300",
+                "addressLine1": "107, Jalan Taming 6",
+                "addressLine2": "Taman Industri Taming Jaya"
+            },
+            "contactInformation": {
+                "phone": "+60 18-912 6284",
+                "companyName": "SAPELO PHARMA SDN. BHD.",
+                "fullName": "Noel Lee",
+                "email": "sapelopharmasdnbhd@gmail.com"
+            }
+        },
+        "receiverDetails": {
+            "postalAddress": {},
+            "contactInformation": {}
+        }
+    }
+    let weight = 0.00
+    orderInfo.lineItems.forEach((lineItem, index) => {
+        quantity += lineItem.quantity
+        weight += lineItem.physicalProperties.weight * lineItem.quantity
+        if (index < lineItems.length - 1) {
+            description = description + lineItem.quantity + " - " + skuList[lineItem.physicalProperties.sku] + ", "
+        } else {
+            description = description + lineItem.quantity + " - " + skuList[lineItem.physicalProperties.sku] + " "
+        }
+    })
+    if (quantity <= 2) {
+        unit_price = 20.00
+    } else if (quantity >= 3 && quantity <= 6) {
+        unit_price = 10.00
+    } else if (quantity >= 7) {
+        unit_price = 5.00
+    }
+    total = total + (unit_price * quantity)
+
+    const data = {
+        "plannedShippingDateAndTime": plannedShippingDateAndTime,
+        "pickup": {},
+        "productCode": productCode,
+        "getRateEstimates": false,
+        "accounts": account,
+        "valueAddedServices": [],
+        "outputImageProperties": {
+            "allDocumentsInOneImage": false,
+            "splitInvoiceAndReceipt": false,
+            "splitDocumentsByPages": false,
+            "splitTransportAndWaybillDocLabels": false,
+            "encodingFormat": "zpl",
+            "imageOptions": [{
+                    "templateName": "COMMERCIAL_INVOICE_P_10",
+                    "isRequested": true,
+                    "typeCode": "invoice"
+                },
+                {
+                    "templateName": "ECOM26_84_001",
+                    "renderDHLLogo": true,
+                    "isRequested": true,
+                    "typeCode": "label"
+                }
+            ]
+        },
+        "customerDetails": customer,
+        "content": {
+            "packages": [{
+                "weight": weight,
+                "dimensions": { length: 10.0, width: 10.0, height: 10.0 },
+                "customerReferences": [{
+                    "value": String(orderInfo.number),
+                    "typeCode": "CU"
+                }],
+                "description": description,
+            }],
+            "isCustomsDeclarable": true,
+            "declaredValue": total,
+            "declaredValueCurrency": "EUR",
+            "description": description,
+            "incoterm": "DAP",
+            "unitOfMeasurement": "metric"
+        },
+        "requestOndemandDeliveryURL": false,
+        "getOptionalInformation": false
+    }
+    data.pickup = {
+        "isRequested": false,
+    }
+
+    data.customerDetails.receiverDetails.postalAddress = {
+        "postalCode": orderInfo.recipientInfo.address.postalCode,
+        "cityName": orderInfo.recipientInfo.address.city,
+        "countryCode": getCountryISO2(orderInfo.recipientInfo.address.country),
+        "addressLine1": addressLine
+    }
+    data.customerDetails.receiverDetails.contactInformation = {
+        "email": orderInfo.buyerInfo.email,
+        "phone": orderInfo.buyerInfo.phone,
+        "companyName": orderInfo.buyerInfo.firstName + " " + orderInfo.buyerInfo.lastName,
+        "fullName": orderInfo.buyerInfo.firstName + " " + orderInfo.buyerInfo.lastName
+    }
+
+    var options = {
+        "method": 'post',
+        "url": "https://express.api.dhl.com/mydhlapi/shipments",
+        "headers": {
+            'content-type': 'application/json',
+            'x-api-key': apiKey,
+            'Authorization': 'Basic M25pdHllcXVpdmFERTpEXjdzTV40YVEkMG5EXjFw',
+        },
+        "data": data
+    }
+    console.log("request data: ", data)
+    return await axios.request(options).then(function (response) {
+        return response.data
+    }).catch(function (error) {
+        return error
+    });
+}
+
+export async function isEuropean(code) {
+    return euMember(code) // => false
+}
+
+export async function getDate(orderInfo) {
+    return orderInfo._updatedDate
+}
+
+export async function saveLabel(orderId, shipmentInfo, name, date, account) {
+    let content = shipmentInfo.documents[0].content
+    const buffer = Buffer.from(content, 'base64');
+    let collection = ""
+    if (account == "germany") {
+        collection = "GermanyLabels"
+    } else if (account == "malaysia") {
+        collection = "MalaysiaLabels"
+    }
+    return await uploadPdf(buffer, name, date)
+        .then(async (response) => {
+            const toInsert = {
+                "labelPdf": "https://c7387c62-839d-4c42-8bc0-ef9d731922e3.usrfiles.com/ugd/" + response.fileName,
+                "orderInfo": orderId,
+                "trackingNumber": shipmentInfo.shipmentTrackingNumber,
+                "trackingLink": `https://www.dhl.com/us-en/home/tracking.html?locale=true&tracking-id=${shipmentInfo.shipmentTrackingNumber}`,
+                "shipmentResponse": shipmentInfo
+            }
+            return await wixData.insert(collection, toInsert)
+                .then(() => {
+                    console.log("pdf data inserted")
+                }).catch((error) => {
+                    console.log("error in inserting pdf data: ", error)
+                })
+        }).catch((error) => {
+            console.log("error in uploding pdf: ", error)
+        })
+}
+
+export async function sendGermanyFiles1() {
+    let results
+    results = await wixData.query("GermanyLabels").find()
+    let links = "",
+        ids = [],
+        contactId;
+
+    const date = new Date().toDateString()
+    const batch = "Batch#1"
+    if (results.items.length > 0) {
+        results.items.forEach((item, index) => {
+            if (index < results.items.length - 1) {
+                links += index + 1 + ". " + item.labelPdf + ",\n \n"
+            } else {
+                links += index + 1 + ". " + item.labelPdf
+            }
+            ids.push(item._id)
+        })
+        const contact = await wixData.query('EmailforLabel').find({ suppressAuth: true })
+        if (contact.items.length > 0) {
+            contactId = contact.items[0].contactId
+        }
+    }
+    return await triggeredEmails.emailContact('UANV54u', contactId, {
+        variables: {
+            links: links,
+            date: date,
+            batch: batch
+        }
+    }).then(async () => {
+        console.log("************************EMAIL SENT*************************\nIDs appended: ", ids)
+        return await wixData.bulkInsert("AllLabels", results.items)
+            .then(async () => {
+                console.log("inserted records")
+                await wixData.bulkRemove("GermanyLabels", ids)
+                    .then(async () => {
+                        console.log("removed records")
+                    })
+                return "Email sent"
+            }).catch((error) => {
+                console.log("error in insertion: ", error)
+            })
+    }).catch((error) => {
+        console.log("error in email: ", error)
+    })
+}
+
+export async function sendGermanyFiles2() {
+    let results
+    results = await wixData.query("GermanyLabels").find()
+    let links = "",
+        ids = [],
+        contactId;
+
+    const date = new Date().toDateString()
+    const batch = "Batch#2"
+    if (results.items.length > 0) {
+        results.items.forEach((item, index) => {
+            if (index < results.items.length - 1) {
+                links += index + 1 + ". " + item.labelPdf + ",\n \n"
+            } else {
+                links += index + 1 + ". " + item.labelPdf
+            }
+            ids.push(item._id)
+        })
+        const contact = await wixData.query('EmailforLabel').find({ suppressAuth: true })
+        if (contact.items.length > 0) {
+            contactId = contact.items[0].contactId
+        }
+    }
+    return await triggeredEmails.emailContact('UANV54u', contactId, {
+        variables: {
+            links: links,
+            date: date,
+            batch: batch
+        }
+    }).then(async () => {
+        console.log("************************EMAIL SENT*************************\nIDs appended: ", ids)
+        return await wixData.bulkInsert("AllLabels", results.items)
+            .then(async () => {
+                console.log("inserted records")
+                await wixData.bulkRemove("GermanyLabels", ids)
+                    .then(async () => {
+                        console.log("removed records")
+                    })
+                return "Email sent"
+            }).catch((error) => {
+                console.log("error in insertion: ", error)
+            })
+    }).catch((error) => {
+        console.log("error in email: ", error)
+    })
+
+}
+
+export async function sendMalaysiaFiles1() {
+    const results = await wixData.query("MalaysiaLabels").find()
+    let links = "",
+        ids = [],
+        contactId;
+
+    const date = new Date().toDateString()
+    const batch = "Batch#1"
+    if (results.items.length > 0) {
+        results.items.forEach((item, index) => {
+            if (index < results.items.length - 1) {
+                links += item.labelPdf + ",\n \n"
+            } else {
+                links += item.labelPdf
+            }
+            ids.push(item._id)
+        })
+        const contact = await wixData.query('EmailforLabel').find({ suppressAuth: true })
+        if (contact.items.length > 0) {
+            contactId = contact.items[0].contactId
+        }
+    }
+    return triggeredEmails.emailContact('UANlaoF', contactId, {
+        variables: {
+            links: links,
+            date: date,
+            batch: batch
+        }
+    }).then(() => {
+        console.log("IDs appended: ", ids)
+        return "Email sent"
+    })
+}
+
+export async function sendMalaysiaFiles2() {
+    const results = await wixData.query("MalaysiaLabels").find()
+    let links = "",
+        ids = [],
+        contactId;
+
+    const date = new Date().toDateString()
+    const batch = "Batch#2"
+    if (results.items.length > 0) {
+        results.items.forEach((item, index) => {
+            if (index < results.items.length - 1) {
+                links += item.labelPdf + ",\n \n"
+            } else {
+                links += item.labelPdf
+            }
+            ids.push(item._id)
+        })
+        const contact = await wixData.query('EmailforLabel').find({ suppressAuth: true })
+        if (contact.items.length > 0) {
+            contactId = contact.items[0].contactId
+        }
+    }
+    return triggeredEmails.emailContact('UANlaoF', contactId, {
+        variables: {
+            links: links,
+            date: date,
+            batch: batch
+        }
+    }).then(() => {
+        console.log("IDs appended: ", ids)
+        return "Email sent"
+    })
+}
+
+export async function getRates() {
+    let config = {
+        method: 'get',
+        url: `https://express.api.dhl.com/mydhlapi/products`,
+        params: {
+
+            accountNumber: '148605080',
+
+            originCountryCode: 'DE',
+
+            originCityName: 'Berlin',
+
+            destinationCountryCode: 'DE',
+
+            destinationCityName: 'Gerstetten',
+
+            weight: '5',
+
+            length: '10',
+
+            width: '10',
+
+            height: '10',
+
+            plannedShippingDate: '2024-04-26',
+
+            isCustomsDeclarable: false,
+            unitOfMeasurement: 'metric'
+
+        },
+        headers: {
+            'x-api-key': '87f70c2c77694d9fa9c8dd9fd9ce972b',
+            'Authorization': 'Basic M25pdHllcXVpdmFERTpEXjdzTV40YVEkMG5EXjFw'
+        }
+    };
+    return await axios.request(config)
+        .then((response) => {
+            return response.data
+        })
+        .catch((error) => {
+            console.log(error);
+        });
+}

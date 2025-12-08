@@ -1,0 +1,46 @@
+uploadLabels.js
+
+import { Permissions, webMethod } from 'wix-web-module';
+import { mediaManager } from 'wix-media-backend';
+
+export async function uploadPdf(content, name, date){
+  return await mediaManager.upload(
+    "/Labels/Germany",
+    content,
+    name + ".pdf",
+    {
+      "mediaOptions": {
+        "mimeType": "application/pdf",
+        "mediaType": "document"
+      },
+      "metadataOptions": {
+        "isPrivate": false,
+        "isVisitorUpload": false,
+        "context": {
+          "date": date,
+          "batch": ""
+        }
+      }
+    }
+  );
+}
+
+/*  Returns a promise that resolves to:
+ *  {
+ *    "mediaType": "image",
+ *    "isPrivate": false,
+ *    "sizeInBytes": 51085,
+ *    "mimeType": "image/jpeg",
+ *    "iconUrl": "wix:image://v1/f6c0f9_g2ae28cf29ec4639bc45698fee57cf56~mv2.jpg/myFileName.jpg#originWidth=300&originHeight=300",
+ *    "fileUrl": "wix:image://v1/f6c0f9_g2ae28cf29ec4639bc45698fee57cf56~mv2.jpg/myFileName.jpg#originWidth=300&originHeight=300",
+ *    "originalFileName": "myFileName.jpg",
+ *    "hash": "bee2f8aab80b0d011499361c2eb189eb",
+ *    "labels": [
+ *      "Blue",
+ *      "Butterfly",
+ *      "Turquoise"
+ *    ],
+ *    "width": 300,
+ *    "height": 300
+ * }
+ */

@@ -1,0 +1,15 @@
+//UPDATE.JSW
+
+import wixData from 'wix-data';
+
+export async function updateDate() {
+    let today = new Date();
+    let day30Earlier = new Date().setDate(today.getDate() - 30);
+    let dayEarlier = new Date(day30Earlier)
+
+    let expireds = (await wixData.query("Fundraiser").eq("approvalState","Approved").eq("status","Active").lt("_createdDate",dayEarlier).find()).items;
+    expireds.forEach((expired)=>{
+        expired.status = "Past";
+        wixData.update("Fundraiser", expired)
+    })
+}

@@ -1,0 +1,32 @@
+// payResult.jsw
+
+import { fetch } from 'wix-fetch';
+import wixSecretsBackend from 'wix-secrets-backend';
+
+export async function getPaymentDetails(sid) {
+
+    try {
+        const apiKey = await wixSecretsBackend.getSecret('checkoutApiKey');
+        const url = `https://api.checkout.com/payments/${sid}`;
+
+        const headers = {
+            'Authorization': `Bearer ${apiKey}`,
+            // 'Authorization': 'Bearer sk_sbox_4oakffdg6j7wzixxmudefe4puis',
+            'Content-Type': 'application/json',
+        };
+
+        const requestOptions = {
+            method: 'GET',
+            headers: headers
+        };
+
+        const response = await fetch(url, requestOptions);
+        const res = response.json()
+        console.log(res);
+        return res;
+    } catch (error) {
+        console.log(error)
+
+    }
+
+}

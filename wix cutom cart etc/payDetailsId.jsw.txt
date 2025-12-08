@@ -1,0 +1,30 @@
+//payDetailsId.jsw
+
+import { fetch } from 'wix-fetch';
+import wixSecretsBackend from 'wix-secrets-backend';
+export async function getPayDetails(payId) {
+    const apiKey = await wixSecretsBackend.getSecret('checkoutApiKey');
+
+    try {
+        // const apiKey = ''
+        const url = `https://api.checkout.com/payments/${payId}`;
+
+        const headers = {
+            'Authorization': `Bearer ${apiKey}`,
+        };
+
+        const requestOptions = {
+            method: 'GET',
+            headers: headers
+        };
+
+        const response = await fetch(url, requestOptions);
+        console.log(response);
+        const res = response.json()
+        return res;
+    } catch (error) {
+        console.log(error)
+
+    }
+
+}

@@ -1,0 +1,13 @@
+convertIso.jsw
+
+import { fetch } from 'wix-fetch';
+export function convertISO3ToISO2(iso3Code) {
+  const apiUrl = `https://convertcountryiso.vercel.app/convert/${iso3Code}`;
+
+  return fetch(apiUrl, { method: 'GET' })
+    .then(response => response.text())
+    .catch(error => {
+      console.error('An error occurred:', error);
+      return 'N/A';
+    });
+}

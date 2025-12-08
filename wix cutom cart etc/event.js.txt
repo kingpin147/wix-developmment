@@ -1,0 +1,64 @@
+// event.js
+
+import wixData from 'wix-data';
+import { createShipment } from 'backend/dhl.jsw'
+import { createFulfillment } from 'backend/order-fulfillments.jsw'
+
+export async function wixPay_onPaymentUpdate(event) {
+    let transactionId = event.transactionId;
+    let newTransactionStatus = event.status;
+
+    if (newTransactionStatus == "Successful") {
+        let donation = (await wixData.query("Donations").eq("transtrackingUrlactionId", transactionId).find()).items[0];
+        if (donation) {
+            donation.status = "Successful";
+            wixData.update("Donations", donation)
+        }
+    }
+}
+
+export function wixStores_onOrderPaid(event) {
+    console.log('onOrderPaidEventTriggered: ', event)
+    // createShipment(event)
+    // .then((response)=>{
+    //   console.log('createdShipment: ', response)
+    //   createFulfillment(event, response.shipmentTrackingNumber, response.trackingUrl)
+    //   .then((response)=>{
+    //     console.log('order fulfillment')
+    //   })
+    // })  
+
+}
+
+export async function wixEcom_onOrderPaymentStatusUpdated(event) {
+    console.log('onOrderPaymentStatusUpdatedTriggered: ', event)
+    const orderInfo = event.data.order
+    console.log("orderInfo: ", orderInfo)
+        await wixData.insert("TestLogs", { "eventDetails": event, "orderInfo": orderInfo._id })
+            .then(() => {
+                console.log("record inserted")
+            })
+
+        const results = await wixData.query("GermanyLabels").eq("orderInfo", orderInfo._id).find()
+        if (results.items.length > 0) {
+            await wixData.insert("TestLogs", { "eventDetails": event, "orderInfo": orderInfo._id, "cameFromIfCondition": true })
+                .then(() => {
+                    console.log("record inserted")
+                })
+        } else {
+            return wixData.query("ActivateAutoFulfillments").find()
+                .then((results) => {
+                    if (results.items[0].activate == true) {
+                        if (orderInfo.fulfillmentStatus == "NOT_FULFILLED" && orderInfo.paymentStatus == "PAID") {
+                            console.log("createShipment")
+                            return createShipment(orderInfo)
+                                .then(() => {
+
+                                }).catch((error) => {
+                                    console.log("an error occured: ", error)
+                                })
+                        }
+                    }
+                })
+        }
+}

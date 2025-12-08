@@ -1,0 +1,14 @@
+<script>
+let timeout = 60;
+setInterval(()=>{
+timeout--;
+if(timeout == 0){
+//logout member
+},1000)
+document.addEventListner('mousemove',()=>{
+timeout =60;
+})
+</script>
+
+Lawrence Christenson
+lawrence@revivagency.com

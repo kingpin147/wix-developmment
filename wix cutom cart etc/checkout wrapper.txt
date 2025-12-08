@@ -1,0 +1,28 @@
+//checkout-wrapper.jsw
+
+import { fetch } from 'wix-fetch'
+import wixSecretsBackend from 'wix-secrets-backend';
+
+// A function for generating requests to the Tazapay API.
+export async function checkoutRequest(method, endpoint, body) {
+  
+  console.log(body)
+  const apiKey =  await wixSecretsBackend.getSecret('checkoutApiKey');
+  const options = {
+    method: method,
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'content-type': 'application/json',
+      },
+      body: body
+    }
+    try{
+      let response = await fetch('https://api.checkout.com/' + endpoint, options)
+      let formattedResponse = await response.json()
+      console.log(formattedResponse)
+      return formattedResponse
+    }catch(err){
+      console.log('The request to the Checkout API failed.', err)
+      return err
+    }
+}
