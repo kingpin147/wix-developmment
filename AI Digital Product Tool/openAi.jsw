@@ -1,0 +1,45 @@
+// Backend file: backend/openAi.jsw
+
+import {getSecret} from 'wix-secrets-backend';
+import {fetch} from 'wix-fetch';
+
+export async function createOpenAIResponse(inputText) {
+    try {
+        const openaiKey = await getSecret("OPENAI_KEY");
+     
+        
+        const requestBody = {
+            model: "gpt-4o",  // Use an appropriate model ID, e.g., gpt-4o or as per your needs
+            input: inputText,  // The text input for the model
+            // Add other optional parameters as needed, e.g.:
+            max_output_tokens: 100,
+            temperature: 0.7,
+            tool_choice: "auto",
+            tools: []  // If using tools or function calling
+        };
+        
+        const apiResponse = await fetch("https://api.openai.com/v1/responses", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${openaiKey}`
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (!apiResponse.ok) {
+            throw new Error(`OpenAI API error: ${apiResponse.status} - ${await apiResponse.text()}`);
+        }
+        
+        const data = await apiResponse.json();
+        
+        // Extract the generated text from the response structure
+        // Based on the provided API docs, the output is in output[0].content[0].text
+        const generatedText = data.output[0].content[0].text;
+        
+        return generatedText;
+    } catch (error) {
+        console.error("Error in createOpenAIResponse:", error);
+        throw error;
+    }
+}
