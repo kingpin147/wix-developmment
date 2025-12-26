@@ -12,11 +12,20 @@ export const createMyOrder = webMethod(
   Permissions.Anyone,
   async (order, options) => {
     try {
+      console.log("Backend: Creating order with structure:", JSON.stringify(order, null, 2));
       const elevatedCreateOrder = auth.elevate(orders.createOrder);
       const result = await elevatedCreateOrder(order, options);
-      return result;
+
+      // Handle structures where the response might be { order: { ... } } or just { ... }
+      const finalOrder = result.order || result;
+      console.log("Backend: Order created successfully ID:", finalOrder?._id || finalOrder?.id);
+
+      return finalOrder;
     } catch (error) {
-      console.error("❌ Order creation failed:", error);
+      console.error("❌ Order creation failed fundamentally:", error);
+      if (error.details) {
+        console.error("❌ Detailed Error Information:", JSON.stringify(error.details, null, 2));
+      }
       await logErrorToDB("createMyOrder", error);
       throw error;
     }

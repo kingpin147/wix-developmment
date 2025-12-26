@@ -23,7 +23,12 @@ const COUNTRY_CODE_MAP = {
 
 // Function to convert country name to ISO code
 function getCountryCode(countryNameOrCode) {
-    if (!countryNameOrCode) return "AU"; // Default to Australia
+    if (!countryNameOrCode) return "AU";
+
+    // Handle Wix Address object
+    if (typeof countryNameOrCode === 'object') {
+        return (countryNameOrCode.code || countryNameOrCode.value || "AU").toUpperCase();
+    }
 
     // If already 2-letter code, return as-is
     if (countryNameOrCode.length === 2) {
@@ -31,7 +36,7 @@ function getCountryCode(countryNameOrCode) {
     }
 
     // Otherwise look up in mapping
-    return COUNTRY_CODE_MAP[countryNameOrCode] || "AU"; // Fallback to Australia
+    return COUNTRY_CODE_MAP[countryNameOrCode] || "AU";
 }
 
 $w.onReady(async () => {
@@ -45,10 +50,9 @@ $w.onReady(async () => {
         console.error("Error collapsing orderSummary - element may not exist:", e);
     }
 
-    $w('#shippingContainer').collapse();
+
     $w('#errorMessage1').collapse();
-    $w('#errorMessage2').collapse();
-    $w('#paymentButton').disable();
+    $w('#paymentButton').enable();
 
     // Load cart data into orderSummary
     await loadCartAndBind();
@@ -59,37 +63,28 @@ $w.onReady(async () => {
         await loadCartAndBind();
     });
 
-    // ===== DETAILS BUTTON - Get customer and shipping details =====
-    $w('#detailsButton').onClick(async () => {
-        console.log("Details button clicked");
+    // ===== PAYMENT BUTTON - Process payment =====
+    $w('#paymentButton').onClick(async () => {
+        console.log("Payment button clicked");
 
         // Hide previous errors
         $w('#errorMessage1').collapse();
 
-        // Validate customer details
+        // --- VALIDATE DETAILS ---
         const email = $w('#email').value?.trim();
         const firstName = $w('#firstName').value?.trim();
         const lastName = $w('#lastName').value?.trim();
         const phone = $w('#phoneNumber').value?.trim();
+        const Businessname = $w('#businessName').value?.trim();
 
-        // Validate shipping details
-        const selectedCountry = $w('#countryDropdown').value;
-        const address = $w('#addressInput').value?.trim();
-        const selectedCity = $w('#cityInput').value?.trim();
-        const selectedSubdivision = $w('#stateDropdown').value;
-        const selectedPostalCode = $w('#postcodeInput').value?.trim();
+        const addressObj = $w('#addressInput').value;
 
-        // Check if any field is missing
-        if (!email || !firstName || !lastName || !phone ||
-            !selectedCountry || !address || !selectedCity ||
-            !selectedSubdivision || !selectedPostalCode) {
-
-            $w('#errorMessage1').text = "Please fill in all required fields in Customer and Delivery Details.";
+        if (!email || !firstName || !lastName || !phone || !addressObj || !addressObj.city || !addressObj.subdivision || !addressObj.postalCode || !addressObj.country) {
+            $w('#errorMessage1').text = "Please enter a complete address using the address search.";
             $w('#errorMessage1').expand();
             return;
         }
 
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             $w('#errorMessage1').text = "Please enter a valid email address.";
@@ -97,209 +92,219 @@ $w.onReady(async () => {
             return;
         }
 
-        // Store shipping info with proper country code conversion
-        country = getCountryCode(selectedCountry);
-        city = selectedCity;
-        subdivision = selectedSubdivision;
-        postalCode = selectedPostalCode;
-        addressLine = address;
+        // Helper utilities
+        const toPriceString = (val) => Number(Number(val) || 0).toFixed(2);
+        const safeString = (val) => {
+            if (val === null || val === undefined) return "";
+            if (typeof val === 'object') {
+                return val.value || val.label || val.formatted || val.addressLine1 || JSON.stringify(val);
+            }
+            return String(val);
+        };
 
-        console.log("Shipping info stored:", { country, city, subdivision, postalCode });
-
-        console.log("All details validated successfully");
-
-        // Collapse detailContainer and expand shippingContainer
-        $w('#detailContainer').collapse();
-        $w('#shippingContainer').expand();
-
-        // Enable payment button by default after details are complete
-        $w('#paymentButton').enable();
-    });
-
-    // ===== SHIPPING RADIO - Handle shipping cost selection =====
-    $w('#shippingRadio').onChange(async (event) => {
-        const selectedValue = event.target.value;
-        console.log("Shipping method selected, raw value:", selectedValue);
-
-        // Radio values are direct numbers: "0" or "23.99"
-        shippingCost = parseFloat(selectedValue) || 0;
-
-        console.log("Shipping cost updated to:", shippingCost);
-
-        // Immediately update the order summary display
-        await updateOrderSummaryDisplay();
-        console.log("Order summary display updated with new shipping");
-        console.log("Order summary display updated with new shipping");
-    });
-
-    // ===== PAYMENT BUTTON - Process payment =====
-    $w('#paymentButton').onClick(async () => {
-        console.log("Payment button clicked");
-
-        // Hide previous errors
-        $w('#errorMessage2').collapse();
+        // Store shipping info from the address object
+        country = getCountryCode(addressObj.country);
+        city = safeString(addressObj.city);
+        subdivision = typeof addressObj.subdivision === 'object' ? (addressObj.subdivision.code || addressObj.subdivision.name) : addressObj.subdivision;
+        postalCode = safeString(addressObj.postalCode);
+        addressLine = safeString(addressObj.formatted);
 
         try {
-            // Get latest cart and checkout data
+            // Get latest cart
             const cart = await myGetCurrentCartFunction();
             if (!cart || !cart.lineItems || cart.lineItems.length === 0) {
                 throw new Error("Your cart is empty. Please add items before checkout.");
             }
 
-            // Calculate totals including GST
-            const subtotalAmount = parseFloat(cart.subtotal?.amount || 0);
-            const grandTotal = subtotalAmount + shippingCost + taxAmount;
+            console.log("DEBUG: Raw Cart Line Items:", JSON.stringify(cart.lineItems, null, 2));
 
-            if (grandTotal <= 0) {
+            // Calculate totals including GST (round to 2 decimals)
+            const subtotalAmount = parseFloat(cart.subtotal?.amount || 0);
+            const currentTaxableAmount = subtotalAmount + shippingCost;
+            const currentTaxAmount = Number((currentTaxableAmount * 0.10).toFixed(2));
+            const currentGrandTotal = Number((subtotalAmount + shippingCost + currentTaxAmount).toFixed(2));
+
+            if (currentGrandTotal <= 0) {
                 throw new Error("Total amount must be greater than zero.");
             }
 
-            // Prepare payment items
+            // 1. Prepare payment items for wix-pay
             const paymentItems = cart.lineItems.map(item => ({
                 name: (item.productName?.original || "Item").substring(0, 100),
                 price: Number(parseFloat(item.lineItemPrice?.amount || 0).toFixed(2))
             }));
 
-            // Add shipping cost if applicable
             if (shippingCost > 0) {
-                paymentItems.push({
-                    name: "Shipping Cost",
-                    price: Number(shippingCost.toFixed(2))
-                });
+                paymentItems.push({ name: "Shipping", price: Number(shippingCost.toFixed(2)) });
+            }
+            if (currentTaxAmount > 0) {
+                paymentItems.push({ name: "GST (10%)", price: Number(currentTaxAmount.toFixed(2)) });
             }
 
-            // Add GST/Tax if applicable
-            if (taxAmount > 0) {
-                paymentItems.push({
-                    name: "GST",
-                    price: Number(taxAmount.toFixed(2))
-                });
-            }
-
-            // Create payment
+            // 2. Create payment in Wix Pay
             const paymentResponse = await createMyPayment({
                 items: paymentItems,
-                totalPrice: Number(grandTotal.toFixed(2))
+                totalPrice: Number(currentGrandTotal.toFixed(2))
             });
 
             console.log("Payment created:", paymentResponse);
 
-            // Build order object
-            // Validate country code is 2-letter format
+            // 3. Build Order Object for Ecom API
             if (!country || country.length !== 2) {
                 throw new Error(`Invalid country code: ${country}. Must be 2-letter ISO code.`);
             }
 
-            const order = {
+            const WIX_STORES_APP_ID = "215238eb-22a5-4c36-9e7b-e7c08025e04e";
+
+            const orderToCreate = {
                 channelInfo: { type: "WEB" },
                 currency: cart.currency || "AUD",
                 buyerInfo: {
-                    email: $w('#email').value?.trim(),
-                    firstName: $w('#firstName').value?.trim(),
-                    lastName: $w('#lastName').value?.trim(),
-                    phone: $w('#phoneNumber').value?.trim()
+                    email: safeString(email),
+                    phone: safeString(phone)
+                },
+                billingInfo: {
+                    contactDetails: {
+                        firstName: safeString(firstName),
+                        lastName: safeString(lastName),
+                        email: safeString(email),
+                        phone: safeString(phone),
+                        company: safeString(Businessname)
+                    },
+                    address: {
+                        country: safeString(country || "AU"),
+                        addressLine1: safeString(addressLine),
+                        city: safeString(city),
+                        subdivision: safeString(subdivision),
+                        postalCode: safeString(postalCode)
+                    }
                 },
                 recipientInfo: {
                     contactDetails: {
-                        firstName: $w('#firstName').value?.trim(),
-                        lastName: $w('#lastName').value?.trim(),
-                        email: $w('#email').value?.trim(),
-                        phone: $w('#phoneNumber').value?.trim()
+                        firstName: safeString(firstName),
+                        lastName: safeString(lastName),
+                        email: safeString(email),
+                        phone: safeString(phone),
+                        company: safeString(Businessname)
                     },
                     address: {
-                        country,
-                        addressLine1: addressLine,
-                        city,
-                        subdivision,
-                        postalCode
+                        country: safeString(country || "AU"),
+                        addressLine1: safeString(addressLine),
+                        city: safeString(city),
+                        subdivision: safeString(subdivision),
+                        postalCode: safeString(postalCode)
                     }
                 },
                 shippingInfo: {
                     logistics: {
                         shippingDestination: {
                             address: {
-                                country,
-                                addressLine1: addressLine,
-                                city,
-                                subdivision,
-                                postalCode
+                                country: safeString(country || "AU"),
+                                addressLine1: safeString(addressLine),
+                                city: safeString(city),
+                                subdivision: safeString(subdivision),
+                                postalCode: safeString(postalCode)
                             }
                         }
                     },
                     cost: {
                         price: {
-                            amount: String(shippingCost),
-                            formattedAmount: `$${shippingCost.toFixed(2)}`
+                            amount: toPriceString(shippingCost)
                         }
                     }
                 },
                 priceSummary: {
                     subtotal: {
-                        amount: String(subtotalAmount),
-                        formattedAmount: cart.subtotal?.formattedAmount || `$${subtotalAmount.toFixed(2)}`
+                        amount: toPriceString(subtotalAmount)
                     },
                     shipping: {
-                        amount: String(shippingCost),
-                        formattedAmount: `$${shippingCost.toFixed(2)}`
+                        amount: toPriceString(shippingCost)
+                    },
+                    tax: {
+                        amount: toPriceString(currentTaxAmount)
                     },
                     total: {
-                        amount: String(grandTotal),
-                        formattedAmount: `$${grandTotal.toFixed(2)}`
+                        amount: toPriceString(currentGrandTotal)
                     }
                 },
-                lineItems: cart.lineItems.map(item => ({
-                    catalogReference: item.catalogReference,
-                    productName: item.productName,
-                    quantity: item.quantity,
-                    price: item.price,
-                    lineItemPrice: item.lineItemPrice,
-                    fullPrice: item.fullPrice || item.price,
-                    priceBeforeDiscounts: item.priceBeforeDiscounts || item.price,
-                    totalPriceBeforeTax: item.totalPriceBeforeTax || item.lineItemPrice,
-                    totalPriceAfterTax: item.totalPriceAfterTax || item.lineItemPrice,
-                    taxDetails: item.taxDetails || {
-                        totalTax: { amount: "0" },
-                        taxRate: "0"
-                    },
-                    itemType: { preset: "PHYSICAL" },
-                    physicalProperties: item.physicalProperties || {
-                        weight: 0,
-                        sku: item.sku || ""
-                    },
-                    media: item.media
-                }))
+                lineItems: cart.lineItems.map(item => {
+                    // Flatten options and variantId for the dashboard
+                    const rawOptions = item.catalogReference?.options || {};
+                    const flattenedOptions = {
+                        ...(rawOptions.options || {}),
+                        variantId: rawOptions.variantId || ""
+                    };
+
+                    const lineItem = {
+                        catalogReference: {
+                            catalogItemId: safeString(item.catalogReference?.catalogItemId),
+                            appId: safeString(item.catalogReference?.appId || WIX_STORES_APP_ID),
+                            options: flattenedOptions
+                        },
+                        productName: {
+                            original: safeString(item.productName?.original || "Item").substring(0, 100),
+                            translated: safeString(item.productName?.translated || item.productName?.original || "Item").substring(0, 100)
+                        },
+                        quantity: Number(item.quantity) || 1,
+                        price: {
+                            amount: toPriceString(item.price?.amount)
+                        },
+                        lineItemPrice: {
+                            amount: toPriceString(item.lineItemPrice?.amount)
+                        },
+                        taxDetails: {
+                            taxRate: "0",
+                            totalTax: {
+                                amount: "0.00"
+                            }
+                        },
+                        itemType: { preset: "PHYSICAL" },
+                        physicalProperties: {
+                            sku: safeString(item.physicalProperties?.sku || item.sku),
+                            weight: Number(item.physicalProperties?.weight || 0)
+                        }
+                    };
+
+                    return lineItem;
+                })
             };
 
-            // Create order
-            const createdOrder = await createMyOrder(order, { includeChannelInfo: true });
-            console.log("Order created successfully:", createdOrder._id);
+            console.log("Creating Order with payload:", JSON.stringify(orderToCreate, null, 2));
 
-            // Start payment process
+            // 4. Create Order
+            const createdOrder = await createMyOrder(orderToCreate, { includeChannelInfo: true });
+            const orderId = createdOrder?._id || createdOrder?.id;
+
+            if (!orderId) {
+                console.error("Order created but no ID returned:", createdOrder);
+                throw new Error("Order was not finalized correctly. Please contact support.");
+            }
+            console.log("Order created successfully. Order ID:", orderId);
+
+            // 5. Start Payment process UI
             const paymentResult = await wixPay.startPayment(paymentResponse.paymentId, {
                 showThankYouPage: true
             });
 
             if (paymentResult.status === "Successful") {
-                // Update order payment status
                 await updateMyOrderPaymentStatus({
-                    orderId: createdOrder._id,
+                    orderId: orderId,
                     paymentId: paymentResponse.paymentId,
                     status: "APPROVED"
                 });
-                console.log("Payment successful!");
+                console.log("Payment successful and order status updated.");
             } else {
                 console.warn("Payment canceled/failed:", paymentResult.status);
-                $w('#errorMessage2').text = "Payment was not completed. Please try again.";
-                $w('#errorMessage2').expand();
+                $w('#errorMessage1').text = "Payment was not completed. Your order has been placed but is pending payment.";
+                $w('#errorMessage1').expand();
             }
 
         } catch (err) {
-            console.error("Payment/Order Error:", err);
+            const errorMsg = err.message || (typeof err === 'string' ? err : JSON.stringify(err));
+            console.error("Detailed Payment/Order Error:", errorMsg);
             await logErrorToDB("paymentButton", err);
-
-            // Show user-friendly error
-            $w('#errorMessage2').text = err.message || "Payment failed. Please try again or contact support.";
-            $w('#errorMessage2').expand();
+            $w('#errorMessage1').text = "Checkout Failed: " + (err.description || err.message || "An unexpected error occurred.");
+            $w('#errorMessage1').expand();
         }
     });
 });
@@ -350,10 +355,10 @@ async function loadCartAndBind() {
         }
 
         // CALCULATE TAX OURSELVES (10% GST)
-        // We calculate this on the displayed subtotal + shipping to ensure consistency
+        // We calculate this on the displayed subtotal + shipping and round to 2 decimals
         const cartSubtotal = parseFloat(cart.subtotal?.amount || 0);
         const taxableAmount = cartSubtotal + shippingCost;
-        taxAmount = taxableAmount * 0.10;
+        taxAmount = Number((taxableAmount * 0.10).toFixed(2));
 
         console.log("=== TAX CALCULATION ===");
         console.log("Subtotal:", cartSubtotal);
@@ -403,10 +408,10 @@ async function updateOrderSummaryDisplay() {
         const currencySymbol = cart.subtotal?.formattedAmount?.match(/^[\D]+/)?.[0] || '$';
         const subtotalAmount = parseFloat(cart.subtotal?.amount || 0);
 
-        // Recalculate Tax/GST based on current subtotal and shipping
-        taxAmount = (subtotalAmount + shippingCost) * 0.10;
+        // Recalculate Tax/GST based on current subtotal and shipping, rounding to 2 decimals
+        taxAmount = Number(((subtotalAmount + shippingCost) * 0.10).toFixed(2));
 
-        const grandTotal = subtotalAmount + shippingCost + taxAmount;
+        const grandTotal = Number((subtotalAmount + shippingCost + taxAmount).toFixed(2));
 
         console.log("=== ORDER SUMMARY CALCULATION ===");
         console.log("Subtotal:", subtotalAmount);

@@ -1,0 +1,284 @@
+import { mediaManager } from 'wix-media-backend';
+import PDFDocument from 'pdfkit';
+
+export async function generatePDF(contentData) {
+    console.log('=== PDF GENERATION START (v1.1) ===');
+    console.log('Input type:', typeof contentData);
+    console.log('Input length:', contentData ? contentData.length : 0);
+
+    try {
+        // Handle both Object and String input types for robustness
+        let title = "";
+        let subtitle = "";
+        let body = "";
+
+        if (typeof contentData === 'string') {
+            console.log('Processing string input...');
+            const rawLines = contentData.split('\n');
+
+            // 1. Check for Title (# )
+            if (rawLines.length > 0 && rawLines[0].trim().startsWith('# ')) {
+                title = rawLines[0].trim().substring(2);
+                rawLines.shift(); // Remove title line
+            }
+
+            // 2. Check for Subtitle (## )
+            if (rawLines.length > 0 && rawLines[0].trim().startsWith('## ')) {
+                subtitle = rawLines[0].trim().substring(3);
+                rawLines.shift(); // Remove subtitle line
+            }
+
+            // JOIN remaining lines for the body
+            body = rawLines.join('\n');
+        } else if (contentData && typeof contentData === 'object') {
+            console.log('Processing object input...');
+            // Fallback: simple destructuring if still needed, but prioritizing string logic
+            title = contentData.title || title;
+            subtitle = contentData.subtitle || subtitle;
+            body = contentData.body || body;
+        }
+
+        console.log('Parsed title:', title);
+        console.log('Parsed subtitle:', subtitle);
+        console.log('Body length:', body.length);
+
+        console.log('Creating PDFDocument...');
+
+        // Helper function to draw header and footer on current page
+        const drawHeaderFooter = (pageIndex) => {
+            if (pageIndex !== undefined) {
+                doc.switchToPage(pageIndex);
+            }
+            console.log(`[v1.2] Drawing header/footer on page index: ${pageIndex}`);
+
+            const pageWidth = doc.page.width;
+            const pageHeight = doc.page.height;
+            const headerHeight = 80;
+            const footerHeight = 60;
+            const pinkColor = '#FF2E8A';
+
+            // Save state to avoid interfering with content
+            doc.save();
+
+            // Reset margins temporarily for header/footer drawing
+            // This is the CRITICAL fix for the infinite recursion
+            const originalMargins = { ...doc.page.margins };
+            doc.page.margins = { top: 0, bottom: 0, left: 0, right: 0 };
+
+            // --- Draw Header ---
+            doc.rect(0, 0, pageWidth, headerHeight).fill(pinkColor);
+            doc.fillColor('white').font('Helvetica-Bold').fontSize(20)
+                .text('AI Digital Product Tool', 0, 28, {
+                    width: pageWidth,
+                    align: 'center'
+                });
+
+            // --- Draw Footer ---
+            doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight).fill(pinkColor);
+            doc.fillColor('white').font('Helvetica').fontSize(10)
+                .text(
+                    'this product is created with https://www.createaipro.com/',
+                    0,
+                    pageHeight - 40,
+                    {
+                        width: pageWidth,
+                        align: 'center',
+                        link: 'https://www.createaipro.com/'
+                    }
+                );
+
+            // Restore margins and state
+            doc.page.margins = originalMargins;
+            doc.restore();
+        };
+
+        const doc = new PDFDocument({
+            size: 'A4',
+            margins: { top: 130, bottom: 80, left: 50, right: 50 },
+            bufferPages: true, // Use buffering to apply headers/footers at the end
+            autoFirstPage: true
+        });
+
+        const pdfBufferPromise = new Promise((resolve, reject) => {
+            const buffers = [];
+            doc.on('data', (chunk) => buffers.push(chunk));
+            doc.on('end', () => {
+                console.log('PDF stream ended, buffer count:', buffers.length);
+                resolve(Buffer.concat(buffers));
+            });
+            doc.on('error', (err) => {
+                console.error('PDF stream error:', err);
+                reject(err);
+            });
+        });
+
+        // We will apply headers/footers at the end using the buffered pages
+        // to ensure we don't trigger the infinite call stack error during generation.
+
+        // === CONTENT GENERATION ===
+        
+        // Track if we've actually added content to prevent blank pages
+        let lastContentY = doc.y;
+
+        if (title) {
+            doc.font('Helvetica-Bold').fontSize(24)
+                .text(title, { align: 'center' });
+            doc.moveDown(1);
+        }
+
+        if (subtitle) {
+            doc.font('Helvetica').fontSize(16).fillColor('#444444')
+                .text(subtitle, { align: 'center' });
+            doc.moveDown(2);
+        }
+
+        doc.fillColor('black').font('Helvetica');
+
+        const lines = (body || "").trim().split('\n');
+
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+            if (!line) {
+                doc.moveDown(0.5);
+                continue;
+            }
+
+            // Horizontal Rule
+            if (line === '---' || line === '***' || line === '___') {
+                doc.moveDown(0.5);
+                doc.moveTo(doc.page.margins.left, doc.y)
+                   .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+                   .stroke('#CCCCCC');
+                doc.moveDown(0.8);
+                continue;
+            }
+
+            
+            // Headings
+            if (line.startsWith('# ')) {
+                doc.font('Helvetica-Bold').fontSize(22).fillColor('#FF2E8A')
+                    .text(line.substring(2));
+                doc.moveDown(0.5);
+                doc.font('Helvetica').fillColor('black'); // Reset
+                lastContentY = doc.y;
+            }
+            else if (line.startsWith('## ')) {
+                doc.font('Helvetica-Bold').fontSize(16).fillColor('black') // Slightly larger than body
+                    .text(line.substring(3));
+                doc.moveDown(0.4);
+                doc.font('Helvetica'); // Reset
+                lastContentY = doc.y;
+            }
+            else if (line.startsWith('### ')) {
+                doc.font('Helvetica-Bold').fontSize(14).fillColor('black')
+                    .text(line.substring(4));
+                doc.moveDown(0.3);
+                doc.font('Helvetica'); // Reset
+                lastContentY = doc.y;
+            }
+            // List Items (Bullets and Numbered)
+            else if (line.startsWith('- ') || line.startsWith('* ') || /^\d+\.\s/.test(line)) {
+                let listText = line.startsWith('- ') || line.startsWith('* ') 
+                    ? line.substring(2) 
+                    : line.replace(/^\d+\.\s/, '');
+
+                doc.fontSize(12).list([listText], {
+                    bulletRadius: 2,
+                    textIndent: 20,
+                    bulletIndent: 10
+                });
+                doc.moveDown(0.3);
+                lastContentY = doc.y;
+            }
+            // Normal Paragraphs
+            else {
+                // Simple Bold/Italic parser for PDFKit
+                // This replaces **text** with a bold font and *text* with italics
+                // Note: PDFKit doesn't support mixed fonts in a single string easily without 'text' chunks
+                // For now, we'll implement a basic version that handles lines that are entirely bold/italic
+                // or just strips the symbols if they are internal for better visual appearance.
+                
+                let processedLine = line
+                    .replace(/\*\*(.*?)\*\*/g, '$1') // Strip bold
+                    .replace(/\*(.*?)\*/g, '$1')   // Strip italic
+                    .replace(/__(.*?)__/g, '$1')   // Strip __bold__
+                    .replace(/_(.*?)_/g, '$1');    // Strip _italic_
+
+                doc.fontSize(12).text(processedLine, {
+                    align: 'left',
+                    lineGap: 4
+                });
+                if (i < lines.length - 1) {
+                    doc.moveDown(0.5);
+                }
+                lastContentY = doc.y;
+            }
+
+        }
+        
+        // Log the final content position
+        console.log('Content ended at Y position:', lastContentY);
+        
+        // === APPLY HEADERS & FOOTERS AT THE END ===
+        const range = doc.bufferedPageRange();
+        console.log(`[v1.2] Finalizing PDF. Total pages: ${range.count}`);
+
+        for (let i = range.start; i < range.start + range.count; i++) {
+            drawHeaderFooter(i);
+        }
+
+        console.log('[v1.2] PDF generation complete, finalizing document...');
+
+        doc.end();
+        console.log('PDF document finalized');
+
+        const pdfBuffer = await pdfBufferPromise;
+        console.log('PDF buffer received, size:', pdfBuffer.length, 'bytes');
+
+        if (!pdfBuffer) throw new Error("PDF buffer empty");
+
+        // === UPLOAD TO WIX MEDIA MANAGER ===
+        const fileName = `${(title || 'product').replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.pdf`;
+        console.log('Uploading to Media Manager with filename:', fileName);
+
+        const uploadedFile = await mediaManager.upload(
+            "ai-products",                    // Folder name (create in Media Manager)
+            pdfBuffer,
+            fileName,
+            {
+                mediaOptions: { mimeType: "application/pdf" },
+                metadataOptions: { isPrivate: false }
+            }
+        );
+
+        console.log('File uploaded successfully');
+        console.log('Uploaded fileUrl:', uploadedFile.fileUrl);
+
+        // === GET TEMPORARY DOWNLOAD URL (valid 24 hours) ===
+        console.log('Generating download URL...');
+        const downloadUrl = await mediaManager.getDownloadUrl(uploadedFile.fileUrl, 86400); // 24 hours
+        console.log('Download URL generated:', downloadUrl);
+
+        const result = {
+            success: true,
+            downloadUrl: downloadUrl,
+            fileUrl: uploadedFile.fileUrl,
+            fileName: fileName
+        };
+
+        console.log('=== PDF GENERATION SUCCESS ===');
+        console.log('Result:', result);
+        return result;
+
+    } catch (error) {
+        console.error('=== PDF GENERATION FAILED ===');
+        console.error('Error:', error);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+
+        return {
+            success: false,
+            error: error.message || "Failed to generate PDF"
+        };
+    }
+}

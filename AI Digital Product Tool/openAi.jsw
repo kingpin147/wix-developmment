@@ -3,21 +3,49 @@
 import {getSecret} from 'wix-secrets-backend';
 import {fetch} from 'wix-fetch';
 
-export async function createOpenAIResponse(inputText) {
+// Cache the API key in memory to reduce secret manager calls
+let cachedOpenaiKey = null;
+
+async function getApiKey() {
+    if (!cachedOpenaiKey) {
+        cachedOpenaiKey = await getSecret("OPENAI_KEY");
+    }
+    return cachedOpenaiKey;
+}
+
+export async function createOpenAIResponse(inputText,instructions) {
     try {
-        const openaiKey = await getSecret("OPENAI_KEY");
-     
+        const openaiKey = await getApiKey();
         
+        console.log("🚀 Starting OpenAI Responses API call...");
+        console.log("📝 Input prompt length:", inputText.length, "characters");
+        
+        // Correct OpenAI Responses API format (New recommended API)
         const requestBody = {
-            model: "gpt-4o",  // Use an appropriate model ID, e.g., gpt-4o or as per your needs
-            input: inputText,  // The text input for the model
-            // Add other optional parameters as needed, e.g.:
-            max_output_tokens: 100,
-            temperature: 0.7,
-            tool_choice: "auto",
-            tools: []  // If using tools or function calling
+            model: "gpt-5-mini", 
+            
+            // Responses API uses separate 'instructions' and 'input' at top level
+            instructions: instructions,
+            
+            input: inputText,  // User's prompt goes here
+            
+            max_output_tokens: 10000,  // Can handle ~4,500 words output
+            
+            // OPTIMIZATION: Use low reasoning effort for maximum speed
+            // gpt-5-mini supports low, medium, high levels
+            reasoning: { effort: "low" },
+            
+            // Optional parameters for Responses API
+            store: false,  // Don't store responses by default (privacy)
+            stream: false  // Set to true for streaming (requires different handling)
         };
         
+        console.log("📤 Sending request to OpenAI Responses API...");
+        console.log("   API: /v1/responses (New Recommended)");
+        console.log("   Model:", requestBody.model);
+        console.log("   Max output tokens:", requestBody.max_output_tokens);
+
+        // OpenAI Responses API endpoint (NEW - recommended since March 2025)
         const apiResponse = await fetch("https://api.openai.com/v1/responses", {
             method: "POST",
             headers: {
@@ -28,18 +56,60 @@ export async function createOpenAIResponse(inputText) {
         });
         
         if (!apiResponse.ok) {
-            throw new Error(`OpenAI API error: ${apiResponse.status} - ${await apiResponse.text()}`);
+            const errorText = await apiResponse.text();
+            console.error("❌ OpenAI Responses API Error:", apiResponse.status, errorText);
+            throw new Error(`OpenAI Responses API error: ${apiResponse.status} - ${errorText}`);
         }
         
         const data = await apiResponse.json();
+        console.log("📦 Response object received:", JSON.stringify(data, null, 2));
         
-        // Extract the generated text from the response structure
-        // Based on the provided API docs, the output is in output[0].content[0].text
-        const generatedText = data.output[0].content[0].text;
+        // Log usage statistics
+        if (data.usage) {
+            console.log("📊 Token Usage:");
+            console.log("   Prompt tokens:", data.usage.prompt_tokens);
+            console.log("   Completion tokens:", data.usage.completion_tokens);
+            console.log("   Total tokens:", data.usage.total_tokens);
+            console.log("   Estimated word count:", Math.round(data.usage.completion_tokens / 1.33));
+        }
+        
+        // Extract the generated text from Responses API format
+        // Responses API returns: { id: "...", output: [...] }
+        if (!data.output || !Array.isArray(data.output) || data.output.length === 0) {
+            console.error("❌ Unexpected Responses API structure:", data);
+            throw new Error("Invalid response structure from OpenAI Responses API");
+        }
+        
+        // The output is an array of content items
+        // For text responses, it's typically: output[0].content[0].text
+        let generatedText = "";
+        
+        // Find the output element that contains a message with text content
+        let messageItem = data.output.find(item => item.type === "message" && Array.isArray(item.content));
+        if (messageItem && messageItem.content.length > 0) {
+            // Look for an output_text element
+            const textObj = messageItem.content.find(c => c.type === "output_text" && c.text);
+            if (textObj && textObj.text) {
+                generatedText = textObj.text;
+            } else {
+                // Fallback to first content text if structure differs
+                generatedText = messageItem.content[0].text || "";
+            }
+        } else if (typeof data.output[0] === "string") {
+            generatedText = data.output[0];
+        } else {
+            console.error("❌ Could not extract text from output:", data.output);
+            throw new Error("Could not extract generated text from response");
+        }
+        
+        console.log("✅ Response received successfully");
+        console.log("📝 Response length:", generatedText.length, "characters");
         
         return generatedText;
+        
     } catch (error) {
-        console.error("Error in createOpenAIResponse:", error);
+        console.error("❌ Error in createOpenAIResponse:", error);
         throw error;
     }
 }
+
