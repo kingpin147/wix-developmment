@@ -1,17 +1,17 @@
-import { permissions, webMethod } from 'wix-web-module';
-import { queryEvents } from 'wix-events-backend';
+import { Permissions, webMethod } from 'wix-web-module';
 import { orders, rsvp } from 'wix-events.v2';
+import { wixEvents } from 'wix-events-backend';
 
 /**
  * Fetches upcoming events for the calendar.
  * @returns {Promise<Array>} List of events.
  */
-export const listUpcomingEvents = webMethod(permissions.Anyone, async () => {
+export const listUpcomingEvents = webMethod(Permissions.Anyone, async () => {
     try {
-        const results = await queryEvents()
+        const results = await wixEvents.queryEvents()
             .eq("status", "SCHEDULED") // Only show upcoming events
             .find();
-        
+
         return results.items.map(event => ({
             id: event._id,
             title: event.title,
@@ -34,9 +34,10 @@ export const listUpcomingEvents = webMethod(permissions.Anyone, async () => {
  * @param {Array} ticketSelection [{ticketId, quantity}]
  * @returns {Promise<Object>} Reservation details.
  */
-export const createEventReservation = webMethod(permissions.Anyone, async (eventId, ticketSelection) => {
+export const createEventReservation = webMethod(Permissions.Anyone, async (eventId, ticketSelection) => {
     try {
-        const options = {
+        const reservation = await orders.createReservation({
+            eventId,
             lineItems: ticketSelection.map(item => ({
                 catalogReference: {
                     catalogItemId: item.ticketId,
@@ -44,9 +45,7 @@ export const createEventReservation = webMethod(permissions.Anyone, async (event
                 },
                 quantity: item.quantity
             }))
-        };
-
-        const reservation = await orders.createReservation(eventId, options);
+        });
         return reservation;
     } catch (error) {
         console.error("Failed to create reservation:", error);
@@ -60,15 +59,16 @@ export const createEventReservation = webMethod(permissions.Anyone, async (event
  * @param {Object} guestDetails {firstName, lastName, email}
  * @returns {Promise<Object>} RSVP details.
  */
-export const createEventRSVP = webMethod(permissions.Anyone, async (eventId, guestDetails) => {
+export const createEventRSVP = webMethod(Permissions.Anyone, async (eventId, guestDetails) => {
     try {
-        const response = await rsvp.createRsvp(eventId, {
-            guest: {
+        const response = await rsvp.createRsvp({
+            eventId,
+            contactDetails: {
                 firstName: guestDetails.firstName,
                 lastName: guestDetails.lastName,
                 email: guestDetails.email
             },
-            status: "YES"
+            attendanceStatus: "YES"
         });
         return response;
     } catch (error) {
@@ -81,14 +81,14 @@ export const createEventRSVP = webMethod(permissions.Anyone, async (eventId, gue
  * Gets details for a specific event, including tickets if applicable.
  * @param {string} eventId 
  */
-export const getEventDetails = webMethod(permissions.Anyone, async (eventId) => {
+export const getEventDetails = webMethod(Permissions.Anyone, async (eventId) => {
     try {
-        const results = await queryEvents()
+        const results = await wixEvents.queryEvents()
             .eq("_id", eventId)
             .find();
-        
+
         if (results.items.length === 0) throw new Error("Event not found");
-        
+
         const event = results.items[0];
         // Note: Tickets are usually queried separately or included in some API versions.
         // For custom picker, we might need another call to wix-events.v2/tickets if needed.
